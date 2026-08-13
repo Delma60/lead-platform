@@ -17,7 +17,13 @@ Edit `.env.local` with:
 - `GITHUB_TOKEN`: Optional token that raises Lead Finder search rate limits
 - `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_AUTHOR_URN`, `LINKEDIN_API_VERSION`: LinkedIn registered-app publishing credentials
 - `X_ACCESS_TOKEN`: X OAuth 2.0 user access token with post read/write scopes
-- `CRON_SECRET`: Random 16+ character secret used to authenticate scheduled publishing
+- `CRON_SECRET`: Random 16+ character secret used to authenticate every cron endpoint
+- `GMAIL_OAUTH_CLIENT_ID`, `GMAIL_OAUTH_CLIENT_SECRET`, `GMAIL_OAUTH_REFRESH_TOKEN`: Google OAuth credentials with the `gmail.readonly` scope for reply sync
+- `DIGEST_EMAIL`: Optional digest recipient; defaults to `GMAIL_USER`
+
+Enable the Gmail API in Google Cloud, configure its OAuth consent screen, and obtain an offline refresh token for the Gmail account using the read-only Gmail scope. Add all Phase 8 secrets to the Vercel production environment. Cron requests are authenticated by Vercel with `CRON_SECRET`.
+
+Phase 8 schedules are UTC: Gmail sync every 15 minutes, approved content publishing hourly, and the action digest daily at 16:00 UTC. Gmail sync only matches replies from known contacted leads, marks them `Replied`, and creates a human review item for any AI-suggested Won/Lost transition.
 
 ### 2. **Install Dependencies**
 ```bash

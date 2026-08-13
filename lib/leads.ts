@@ -79,8 +79,8 @@ export function parseLeadInput(value: unknown, partial: boolean): { ok: true; da
   return { ok: true, data };
 }
 
-export function leadFlags(lead: Pick<Lead, 'status' | 'followUpDate' | 'lastContactedAt'>) {
-  const now = Date.now();
+export function leadFlags(lead: Pick<Lead, 'status' | 'followUpDate' | 'lastContactedAt'>, at = new Date()) {
+  const now = at.getTime();
   const overdue = !!lead.followUpDate && lead.followUpDate.getTime() < now && !['Won', 'Lost'].includes(lead.status);
   const staleCutoff = now - 7 * 24 * 60 * 60 * 1000;
   const stale = lead.status === 'Contacted' && !lead.followUpDate && !!lead.lastContactedAt && lead.lastContactedAt.getTime() < staleCutoff;

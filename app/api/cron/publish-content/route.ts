@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { content } from '@/lib/db/schema';
 import { publishPost } from '@/lib/social-publishing';
+import { rejectUnauthorizedCron } from '@/lib/cron';
 export async function GET(request: NextRequest) {
-  if (!process.env.CRON_SECRET || request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const unauthorized = rejectUnauthorizedCron(request);
+  if (unauthorized) return unauthorized;
   const due = await db.select().from(content).where(and(eq(content.status, 'scheduled'), eq(content.reviewStatus, 'approved'), lte(content.scheduledAt, new Date())));
   const results = [];
   for (const post of due) {
