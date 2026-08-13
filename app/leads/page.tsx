@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { LeadsBoard, type ClientLead } from '@/components/LeadsBoard';
-import { leadSources, leadStatuses } from '@/lib/db/schema';
+import { leadSources, leadStatuses, rejectionReasons } from '@/lib/db/schema';
 
-type FormState = { company: string; contactName: string; contactEmail: string; contactPhone: string; source: string; status: string; priority: string; followUpDate: string; notes: string };
-const emptyForm: FormState = { company: '', contactName: '', contactEmail: '', contactPhone: '', source: 'Other', status: 'New', priority: '3', followUpDate: '', notes: '' };
+type FormState = { company: string; contactName: string; contactEmail: string; contactPhone: string; source: string; status: string; priority: string; followUpDate: string; notes: string; rejectionReason: string; referralSourceLead: string };
+const emptyForm: FormState = { company: '', contactName: '', contactEmail: '', contactPhone: '', source: 'Other', status: 'New', priority: '3', followUpDate: '', notes: '', rejectionReason: '', referralSourceLead: '' };
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<ClientLead[]>([]);
@@ -35,13 +35,13 @@ export default function LeadsPage() {
   function openNew() { setEditing(null); setForm(emptyForm); setError(''); setDuplicateWarning(false); setModalOpen(true); }
   function openEdit(lead: ClientLead) {
     setEditing(lead);
-    setForm({ company: lead.company, contactName: lead.contactName, contactEmail: lead.contactEmail, contactPhone: lead.contactPhone ?? '', source: lead.source ?? 'Other', status: lead.status, priority: String(lead.priority ?? 3), followUpDate: lead.followUpDate?.slice(0, 10) ?? '', notes: lead.notes ?? '' });
+    setForm({ company: lead.company, contactName: lead.contactName, contactEmail: lead.contactEmail, contactPhone: lead.contactPhone ?? '', source: lead.source ?? 'Other', status: lead.status, priority: String(lead.priority ?? 3), followUpDate: lead.followUpDate?.slice(0, 10) ?? '', notes: lead.notes ?? '', rejectionReason: lead.rejectionReason ?? '', referralSourceLead: String(lead.referralSourceLead ?? '') });
     setError(''); setDuplicateWarning(false); setModalOpen(true);
   }
 
   async function save(event: FormEvent, confirmDuplicate = false) {
     event.preventDefault(); setSaving(true); setError('');
-    const payload = { ...form, priority: Number(form.priority), followUpDate: form.followUpDate ? `${form.followUpDate}T12:00:00` : null, confirmDuplicate };
+    const payload = { ...form, priority: Number(form.priority), followUpDate: form.followUpDate ? `${form.followUpDate}T12:00:00` : null, rejectionReason: form.status === 'Lost' ? form.rejectionReason : null, referralSourceLead: form.source === 'Referral' && form.referralSourceLead ? Number(form.referralSourceLead) : null, confirmDuplicate };
     try {
       const response = await fetch(editing ? `/api/leads/${editing.id}` : '/api/leads', { method: editing ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
@@ -53,9 +53,17 @@ export default function LeadsPage() {
   }
 
   async function changeStatus(id: number, status: (typeof leadStatuses)[number]) {
+    let rejectionReason: string | null = null;
+    if (status === 'Lost') {
+      rejectionReason = window.prompt(`Why was this lead lost? Choose: ${rejectionReasons.join(', ')}`, 'No reply');
+      if (!rejectionReason) return;
+      const match = rejectionReasons.find((reason) => reason.toLowerCase() === rejectionReason?.trim().toLowerCase());
+      if (!match) { setError(`Choose a rejection reason: ${rejectionReasons.join(', ')}`); return; }
+      rejectionReason = match;
+    }
     const previous = leads;
     setLeads((items) => items.map((lead) => lead.id === id ? { ...lead, status } : lead));
-    const response = await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    const response = await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, ...(rejectionReason && { rejectionReason }) }) });
     if (!response.ok) { setLeads(previous); setError('Could not update lead status'); }
     else await loadLeads();
   }
@@ -88,6 +96,8 @@ export default function LeadsPage() {
             <label className="text-sm font-medium text-slate-700">Status<select className="input mt-1" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>{leadStatuses.map((status) => <option key={status}>{status}</option>)}</select></label>
             <label className="text-sm font-medium text-slate-700">Priority (1–5)<input className="input mt-1" type="number" min="1" max="5" required value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} /></label>
             <label className="text-sm font-medium text-slate-700">Follow-up date<input className="input mt-1" type="date" value={form.followUpDate} onChange={(e) => setForm({ ...form, followUpDate: e.target.value })} /></label>
+            {form.status === 'Lost' && <label className="text-sm font-medium text-slate-700">Rejection reason *<select className="input mt-1" required value={form.rejectionReason} onChange={(e) => setForm({ ...form, rejectionReason: e.target.value })}><option value="">Select a reason</option>{rejectionReasons.map((reason) => <option key={reason}>{reason}</option>)}</select></label>}
+            {form.source === 'Referral' && <label className="text-sm font-medium text-slate-700">Referred by Won lead<select className="input mt-1" value={form.referralSourceLead} onChange={(e) => setForm({ ...form, referralSourceLead: e.target.value })}><option value="">Select a client</option>{leads.filter((lead) => lead.status === 'Won' && lead.id !== editing?.id).map((lead) => <option key={lead.id} value={lead.id}>{lead.company} — {lead.contactName}</option>)}</select></label>}
             <label className="text-sm font-medium text-slate-700 sm:col-span-2">Notes<textarea className="input mt-1 min-h-24 resize-y" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
             {duplicateWarning && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 sm:col-span-2">A lead with this email or company/contact already exists. Save it anyway?</div>}
             {error && <div className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700 sm:col-span-2">{error}</div>}

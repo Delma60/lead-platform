@@ -3,6 +3,7 @@ import { pgTable, text, serial, varchar, timestamp, integer, boolean } from 'dri
 export const leadStatuses = ['New', 'Contacted', 'Replied', 'Won', 'Lost'] as const;
 export const leadSources = ['Upwork', 'Wellfound', 'Cold', 'Referral', 'RemoteOK', 'GitHub', 'Other'] as const;
 export const templateVariants = ['SDK story', 'wallet story', 'lending story', 'general'] as const;
+export const rejectionReasons = ['Budget', 'Agency', 'Timing', 'No reply', 'Other'] as const;
 
 /**
  * Leads table: Core lead pipeline data
@@ -23,7 +24,7 @@ export const leads = pgTable('leads', {
     length: 50,
   }),
   notes: text('notes'),
-  rejectionReason: varchar('rejection_reason', { length: 255 }), // when status = Lost
+  rejectionReason: varchar('rejection_reason', { enum: rejectionReasons, length: 255 }), // when status = Lost
   followUpDate: timestamp('follow_up_date'),
   isOverdue: boolean('is_overdue').default(false),
   isStale: boolean('is_stale').default(false), // Contacted + no reply + no follow-up scheduled

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { leads } from '@/lib/db/schema';
@@ -19,6 +19,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
     const update = parsed.data;
+    const [existing] = await db.select().from(leads).where(eq(leads.id, id)).limit(1);
+    if (!existing) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+    if (update.status === 'Lost' && !update.rejectionReason && !existing.rejectionReason) return NextResponse.json({ error: 'A rejection reason is required when a lead is Lost' }, { status: 400 });
+    if (update.referralSourceLead === id) return NextResponse.json({ error: 'A lead cannot refer itself' }, { status: 400 });
+    if (update.referralSourceLead) {
+      const [referrer] = await db.select({ id: leads.id }).from(leads).where(and(eq(leads.id, update.referralSourceLead), eq(leads.status, 'Won'))).limit(1);
+      if (!referrer) return NextResponse.json({ error: 'Referral source must be a Won lead' }, { status: 400 });
+    }
+    const now = new Date();
+    const repliedAt = update.status === 'Replied' && !existing.repliedAt ? now : existing.repliedAt;
+    const replyTimeInDays = repliedAt && existing.lastContactedAt
+      ? Math.max(0, Math.ceil((repliedAt.getTime() - existing.lastContactedAt.getTime()) / 86_400_000))
+      : existing.replyTimeInDays;
     const [updated] = await db.update(leads).set({
       ...(update.company !== undefined && { company: update.company }),
       ...(update.contactName !== undefined && { contactName: update.contactName }),
@@ -29,9 +42,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       ...(update.priority !== undefined && { priority: update.priority }),
       ...(update.notes !== undefined && { notes: normalizeOptionalText(update.notes) }),
       ...(update.followUpDate !== undefined && { followUpDate: update.followUpDate }),
-      ...(update.status === 'Contacted' && { lastContactedAt: new Date() }),
-      ...(update.status === 'Replied' && { repliedAt: new Date() }),
-      updatedAt: new Date(),
+      ...(update.rejectionReason !== undefined && { rejectionReason: update.rejectionReason }),
+      ...(update.referralSourceLead !== undefined && { referralSourceLead: update.referralSourceLead }),
+      ...(update.status && update.status !== 'Lost' && { rejectionReason: null }),
+      ...(update.status === 'Contacted' && !existing.lastContactedAt && { lastContactedAt: now }),
+      ...(update.status === 'Replied' && { repliedAt, replyTimeInDays }),
+      updatedAt: now,
     }).where(eq(leads.id, id)).returning();
 
     if (!updated) return NextResponse.json({ error: 'Lead not found' }, { status: 404 });

@@ -38,6 +38,8 @@ function LeadCard({ lead, onEdit, onStatusChange }: { lead: ClientLead } & Pick<
         {lead.isStale && <span className="badge bg-orange-50 text-orange-700">Stale 7+ days</span>}
       </div>
       {lead.followUpDate && <p className="mt-3 text-xs text-slate-500">Follow up {new Date(lead.followUpDate).toLocaleDateString()}</p>}
+      {lead.replyTimeInDays !== null && <p className="mt-2 text-xs font-medium text-violet-600">Replied in {lead.replyTimeInDays} day{lead.replyTimeInDays === 1 ? '' : 's'}</p>}
+      {lead.rejectionReason && <p className="mt-2 text-xs text-rose-600">Lost: {lead.rejectionReason}</p>}
       <label className="mt-3 block text-xs font-medium text-slate-500">
         Move to
         <select

@@ -1,4 +1,4 @@
-import { leadSources, leadStatuses, type Lead } from '@/lib/db/schema';
+import { leadSources, leadStatuses, rejectionReasons, type Lead } from '@/lib/db/schema';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const hasOwn = (value: object, key: string) => Object.prototype.hasOwnProperty.call(value, key);
@@ -13,6 +13,8 @@ export type LeadInput = {
   priority?: number | null;
   notes?: string;
   followUpDate?: Date | null;
+  rejectionReason?: (typeof rejectionReasons)[number] | null;
+  referralSourceLead?: number | null;
   confirmDuplicate?: boolean;
 };
 
@@ -51,6 +53,16 @@ export function parseLeadInput(value: unknown, partial: boolean): { ok: true; da
     if (body.followUpDate === null || body.followUpDate === '') data.followUpDate = null;
     else if (typeof body.followUpDate === 'string' && !Number.isNaN(Date.parse(body.followUpDate))) data.followUpDate = new Date(body.followUpDate);
     else return { ok: false, error: 'Invalid follow-up date' };
+  }
+  if (hasOwn(body, 'rejectionReason')) {
+    if (body.rejectionReason === null || body.rejectionReason === '') data.rejectionReason = null;
+    else if (typeof body.rejectionReason === 'string' && rejectionReasons.includes(body.rejectionReason as never)) data.rejectionReason = body.rejectionReason as LeadInput['rejectionReason'];
+    else return { ok: false, error: 'Invalid rejection reason' };
+  }
+  if (hasOwn(body, 'referralSourceLead')) {
+    if (body.referralSourceLead === null || body.referralSourceLead === '') data.referralSourceLead = null;
+    else if (Number.isSafeInteger(Number(body.referralSourceLead)) && Number(body.referralSourceLead) > 0) data.referralSourceLead = Number(body.referralSourceLead);
+    else return { ok: false, error: 'Invalid referral source lead' };
   }
   data.confirmDuplicate = body.confirmDuplicate === true;
   if (partial && !Object.keys(data).some((key) => key !== 'confirmDuplicate')) return { ok: false, error: 'No supported fields supplied' };

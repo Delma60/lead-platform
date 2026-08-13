@@ -30,14 +30,14 @@
 - [x] `/api/send-email` route — send via Nodemailer, log to `send_log` with which template was used
 
 ## Phase 4: Tracking & insights
-- [ ] Reply/response time tracking (days from Contacted → Replied)
-- [ ] Source field + breakdown view (Upwork vs Wellfound vs cold vs referral)
-- [ ] Referral tracking — tag leads that came from a Won client
-- [ ] Weekly digest (leads added / contacted / replied this week)
-- [ ] Template performance view (reply rate per template/variant)
-- [ ] Rejection reason field when a lead goes to "Lost" (budget, agency, timing, no reply, other)
-- [ ] Funnel view — New → Contacted → Replied → Won with conversion % at each stage
-- [ ] "This week" snapshot on dashboard load (leads added / emails sent / replies)
+- [x] Reply/response time tracking (days from Contacted → Replied)
+- [x] Source field + breakdown view (Upwork vs Wellfound vs cold vs referral)
+- [x] Referral tracking — tag leads that came from a Won client
+- [x] Weekly digest (leads added / contacted / replied this week)
+- [x] Template performance view (reply rate per template/variant)
+- [x] Rejection reason field when a lead goes to "Lost" (budget, agency, timing, no reply, other)
+- [x] Funnel view — New → Contacted → Replied → Won with conversion % at each stage
+- [x] "This week" snapshot on dashboard load (leads added / emails sent / replies)
 
 ## Phase 5: Won-lead follow-through
 - [ ] Rate/scope notes per lead (what was quoted, project size)

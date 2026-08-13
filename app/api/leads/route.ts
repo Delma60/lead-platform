@@ -30,6 +30,11 @@ export async function POST(request: NextRequest) {
     const company = parsed.data.company!;
     const contactEmail = parsed.data.contactEmail!;
     const contactName = parsed.data.contactName!;
+    if (parsed.data.status === 'Lost' && !parsed.data.rejectionReason) return NextResponse.json({ error: 'A rejection reason is required when a lead is Lost' }, { status: 400 });
+    if (parsed.data.referralSourceLead) {
+      const [referrer] = await db.select({ id: leads.id }).from(leads).where(and(eq(leads.id, parsed.data.referralSourceLead), eq(leads.status, 'Won'))).limit(1);
+      if (!referrer) return NextResponse.json({ error: 'Referral source must be a Won lead' }, { status: 400 });
+    }
     const duplicates = await db.select().from(leads).where(
       or(
         sql`lower(${leads.contactEmail}) = lower(${contactEmail})`,
@@ -53,9 +58,12 @@ export async function POST(request: NextRequest) {
       contactEmail,
       contactPhone: normalizeOptionalText(parsed.data.contactPhone),
       source: parsed.data.source ?? leadSources.at(-1),
+      status: parsed.data.status ?? 'New',
       priority: parsed.data.priority ?? null,
       notes: normalizeOptionalText(parsed.data.notes),
       followUpDate: parsed.data.followUpDate ?? null,
+      rejectionReason: parsed.data.rejectionReason ?? null,
+      referralSourceLead: parsed.data.referralSourceLead ?? null,
       isDuplicate: duplicates.length > 0,
     }).returning();
 
