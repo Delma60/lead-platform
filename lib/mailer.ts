@@ -1,21 +1,19 @@
 import nodemailer from 'nodemailer';
 
-if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-  throw new Error('GMAIL_USER and GMAIL_APP_PASSWORD environment variables are required');
-}
-
 /**
  * Nodemailer transport for sending emails via Gmail SMTP
  * Uses App Password (not regular Gmail password)
  * Limit: ~500 emails/day for standard Gmail accounts
  */
-export const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+function createTransporter() {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    throw new Error('Gmail SMTP is not configured');
+  }
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+  });
+}
 
 /**
  * Send an email using the configured transporter
@@ -31,7 +29,7 @@ export async function sendEmail(
   text?: string
 ) {
   try {
-    const info = await transporter.sendMail({
+    const info = await createTransporter().sendMail({
       from: process.env.GMAIL_USER,
       to,
       subject,
@@ -55,7 +53,22 @@ export function renderTemplate(
 ): string {
   let rendered = template;
   Object.entries(variables).forEach(([key, value]) => {
-    rendered = rendered.replace(new RegExp(`{{${key}}}`, 'g'), value);
+    const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    rendered = rendered.replace(new RegExp(`{{\\s*${safeKey}\\s*}}`, 'g'), value);
   });
   return rendered;
+}
+
+export function unresolvedVariables(value: string) {
+  return [...value.matchAll(/{{\s*([a-zA-Z][\w]*)\s*}}/g)].map((match) => match[1]);
+}
+
+export function textToHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+    .replaceAll('\n', '<br>');
 }

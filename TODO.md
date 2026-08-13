@@ -21,13 +21,13 @@
 - [x] Stale lead flag — "Contacted" + no reply after 7 days + no follow-up scheduled (separate from overdue)
 
 ## Phase 3: Email templates
-- [ ] `templates` table (name, subject, body, variant tag e.g. "SDK story"/"wallet story"/"lending story")
-- [ ] `/app/templates` — list, create, edit templates page (shadcn Table + Form)
-- [ ] Variable placeholders in templates (e.g. `{{company}}`, `{{contactName}}`, `{{pitchDetail}}`)
-- [ ] Template preview (rendered with sample or real lead data) before send
-- [ ] Follow-up sequence templates — initial → day-4 nudge → day-10 final, linked as a set
-- [ ] Personalization checklist before send (did you reference something specific about them?)
-- [ ] `/api/send-email` route — send via Nodemailer, log to `send_log` with which template was used
+- [x] `templates` table (name, subject, body, variant tag e.g. "SDK story"/"wallet story"/"lending story")
+- [x] `/app/templates` — list, create, edit templates page (accessible table-style list + form)
+- [x] Variable placeholders in templates (e.g. `{{company}}`, `{{contactName}}`, `{{pitchDetail}}`)
+- [x] Template preview (rendered with sample or real lead data) before send
+- [x] Follow-up sequence templates — initial → day-4 nudge → day-10 final, linked as a set
+- [x] Personalization checklist before send (did you reference something specific about them?)
+- [x] `/api/send-email` route — send via Nodemailer, log to `send_log` with which template was used
 
 ## Phase 4: Tracking & insights
 - [ ] Reply/response time tracking (days from Contacted → Replied)
