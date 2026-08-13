@@ -12,6 +12,9 @@ Edit `.env.local` with:
 - `DATABASE_URL`: Your Neon Postgres connection string (get from [neon.tech](https://neon.tech))
 - `GMAIL_USER`: Your Gmail address
 - `GMAIL_APP_PASSWORD`: An [App Password from Google Account](https://support.google.com/accounts/answer/185833) (not your regular password)
+- `OPENAI_API_KEY`: OpenAI API key used by research, drafting, and reply triage
+- `OPENAI_MODEL`: Optional Responses API model override (defaults to `gpt-5.4-mini`)
+- `GITHUB_TOKEN`: Optional token that raises Lead Finder search rate limits
 
 ### 2. **Install Dependencies**
 ```bash
@@ -45,6 +48,8 @@ lead-platform/
 │   │   ├── leads/              # Lead CRUD endpoints
 │   │   └── send-email/         # Email sending endpoint
 │   ├── dashboard/              # Analytics dashboard page
+│   ├── ai/                     # AI research, drafting, triage, and review workspace
+│   ├── finder/                 # Public-source lead finder and manual import
 │   ├── leads/                  # Lead board page
 │   ├── templates/              # Email templates management page
 │   ├── content/                # Social content management page

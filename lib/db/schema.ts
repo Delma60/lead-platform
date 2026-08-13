@@ -113,6 +113,8 @@ export const content = pgTable('content', {
     enum: ['draft', 'scheduled', 'posted'],
     length: 20,
   }).default('draft'),
+  reviewStatus: varchar('review_status', { enum: ['needs_review', 'approved', 'rejected'], length: 30 }).default('needs_review').notNull(),
+  sourcePrompt: text('source_prompt'),
   scheduledAt: timestamp('scheduled_at'),
   postedAt: timestamp('posted_at'),
   relatedRepo: varchar('related_repo', { length: 255 }),
@@ -121,6 +123,19 @@ export const content = pgTable('content', {
   comments: integer('comments').default(0),
   reposts: integer('reposts').default(0),
   platformId: varchar('platform_id', { length: 255 }), // external ID from platform
+  platformUrl: varchar('platform_url', { length: 1000 }),
+  clicks: integer('clicks').default(0).notNull(),
+  performanceUpdatedAt: timestamp('performance_updated_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const contentIdeas = pgTable('content_ideas', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  angle: text('angle'),
+  source: varchar('source', { length: 100 }),
+  status: varchar('status', { enum: ['idea', 'drafted', 'archived'], length: 20 }).default('idea').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -136,3 +151,5 @@ export type AiReview = typeof aiReviews.$inferSelect;
 export type NewAiReview = typeof aiReviews.$inferInsert;
 export type ContentPost = typeof content.$inferSelect;
 export type NewContentPost = typeof content.$inferInsert;
+export type ContentIdea = typeof contentIdeas.$inferSelect;
+export type NewContentIdea = typeof contentIdeas.$inferInsert;
