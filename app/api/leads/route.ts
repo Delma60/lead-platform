@@ -64,6 +64,9 @@ export async function POST(request: NextRequest) {
       followUpDate: parsed.data.followUpDate ?? null,
       rejectionReason: parsed.data.rejectionReason ?? null,
       referralSourceLead: parsed.data.referralSourceLead ?? null,
+      rateScope: normalizeOptionalText(parsed.data.rateScope ?? undefined),
+      contractSigned: parsed.data.contractSigned ?? false,
+      depositPaid: parsed.data.depositPaid ?? false,
       isDuplicate: duplicates.length > 0,
     }).returning();
 

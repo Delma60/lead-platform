@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { LeadsBoard, type ClientLead } from '@/components/LeadsBoard';
 import { leadSources, leadStatuses, rejectionReasons } from '@/lib/db/schema';
 
-type FormState = { company: string; contactName: string; contactEmail: string; contactPhone: string; source: string; status: string; priority: string; followUpDate: string; notes: string; rejectionReason: string; referralSourceLead: string };
-const emptyForm: FormState = { company: '', contactName: '', contactEmail: '', contactPhone: '', source: 'Other', status: 'New', priority: '3', followUpDate: '', notes: '', rejectionReason: '', referralSourceLead: '' };
+type FormState = { company: string; contactName: string; contactEmail: string; contactPhone: string; source: string; status: string; priority: string; followUpDate: string; notes: string; rejectionReason: string; referralSourceLead: string; rateScope: string; contractSigned: boolean; depositPaid: boolean };
+const emptyForm: FormState = { company: '', contactName: '', contactEmail: '', contactPhone: '', source: 'Other', status: 'New', priority: '3', followUpDate: '', notes: '', rejectionReason: '', referralSourceLead: '', rateScope: '', contractSigned: false, depositPaid: false };
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<ClientLead[]>([]);
@@ -35,7 +35,7 @@ export default function LeadsPage() {
   function openNew() { setEditing(null); setForm(emptyForm); setError(''); setDuplicateWarning(false); setModalOpen(true); }
   function openEdit(lead: ClientLead) {
     setEditing(lead);
-    setForm({ company: lead.company, contactName: lead.contactName, contactEmail: lead.contactEmail, contactPhone: lead.contactPhone ?? '', source: lead.source ?? 'Other', status: lead.status, priority: String(lead.priority ?? 3), followUpDate: lead.followUpDate?.slice(0, 10) ?? '', notes: lead.notes ?? '', rejectionReason: lead.rejectionReason ?? '', referralSourceLead: String(lead.referralSourceLead ?? '') });
+    setForm({ company: lead.company, contactName: lead.contactName, contactEmail: lead.contactEmail, contactPhone: lead.contactPhone ?? '', source: lead.source ?? 'Other', status: lead.status, priority: String(lead.priority ?? 3), followUpDate: lead.followUpDate?.slice(0, 10) ?? '', notes: lead.notes ?? '', rejectionReason: lead.rejectionReason ?? '', referralSourceLead: String(lead.referralSourceLead ?? ''), rateScope: lead.rateScope ?? '', contractSigned: lead.contractSigned, depositPaid: lead.depositPaid });
     setError(''); setDuplicateWarning(false); setModalOpen(true);
   }
 
@@ -98,6 +98,7 @@ export default function LeadsPage() {
             <label className="text-sm font-medium text-slate-700">Follow-up date<input className="input mt-1" type="date" value={form.followUpDate} onChange={(e) => setForm({ ...form, followUpDate: e.target.value })} /></label>
             {form.status === 'Lost' && <label className="text-sm font-medium text-slate-700">Rejection reason *<select className="input mt-1" required value={form.rejectionReason} onChange={(e) => setForm({ ...form, rejectionReason: e.target.value })}><option value="">Select a reason</option>{rejectionReasons.map((reason) => <option key={reason}>{reason}</option>)}</select></label>}
             {form.source === 'Referral' && <label className="text-sm font-medium text-slate-700">Referred by Won lead<select className="input mt-1" value={form.referralSourceLead} onChange={(e) => setForm({ ...form, referralSourceLead: e.target.value })}><option value="">Select a client</option>{leads.filter((lead) => lead.status === 'Won' && lead.id !== editing?.id).map((lead) => <option key={lead.id} value={lead.id}>{lead.company} — {lead.contactName}</option>)}</select></label>}
+            {form.status === 'Won' && <fieldset className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:col-span-2"><legend className="px-1 text-sm font-semibold text-emerald-900">Won-lead follow-through</legend><label className="mt-2 block text-sm font-medium text-emerald-950">Rate and scope notes<textarea className="input mt-1 min-h-24 resize-y" placeholder="Quoted rate, project size, deliverables, timeline…" value={form.rateScope} onChange={(e) => setForm({ ...form, rateScope: e.target.value })}/></label><div className="mt-4 flex flex-wrap gap-5"><label className="flex items-center gap-2 text-sm font-medium text-emerald-950"><input type="checkbox" checked={form.contractSigned} onChange={(e) => setForm({ ...form, contractSigned: e.target.checked })}/>Contract signed</label><label className="flex items-center gap-2 text-sm font-medium text-emerald-950"><input type="checkbox" checked={form.depositPaid} onChange={(e) => setForm({ ...form, depositPaid: e.target.checked })}/>Deposit paid</label></div></fieldset>}
             <label className="text-sm font-medium text-slate-700 sm:col-span-2">Notes<textarea className="input mt-1 min-h-24 resize-y" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
             {duplicateWarning && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 sm:col-span-2">A lead with this email or company/contact already exists. Save it anyway?</div>}
             {error && <div className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700 sm:col-span-2">{error}</div>}

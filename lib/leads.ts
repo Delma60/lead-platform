@@ -15,6 +15,9 @@ export type LeadInput = {
   followUpDate?: Date | null;
   rejectionReason?: (typeof rejectionReasons)[number] | null;
   referralSourceLead?: number | null;
+  rateScope?: string | null;
+  contractSigned?: boolean;
+  depositPaid?: boolean;
   confirmDuplicate?: boolean;
 };
 
@@ -27,7 +30,7 @@ export function parseLeadInput(value: unknown, partial: boolean): { ok: true; da
   const body = value as Record<string, unknown>;
   const data: LeadInput = {};
 
-  for (const key of ['company', 'contactName', 'contactEmail', 'contactPhone', 'notes'] as const) {
+  for (const key of ['company', 'contactName', 'contactEmail', 'contactPhone', 'notes', 'rateScope'] as const) {
     if (hasOwn(body, key)) {
       if (typeof body[key] !== 'string') return { ok: false, error: `${key} must be text` };
       data[key] = body[key].trim();
@@ -63,6 +66,12 @@ export function parseLeadInput(value: unknown, partial: boolean): { ok: true; da
     if (body.referralSourceLead === null || body.referralSourceLead === '') data.referralSourceLead = null;
     else if (Number.isSafeInteger(Number(body.referralSourceLead)) && Number(body.referralSourceLead) > 0) data.referralSourceLead = Number(body.referralSourceLead);
     else return { ok: false, error: 'Invalid referral source lead' };
+  }
+  for (const key of ['contractSigned', 'depositPaid'] as const) {
+    if (hasOwn(body, key)) {
+      if (typeof body[key] !== 'boolean') return { ok: false, error: `${key} must be a boolean` };
+      data[key] = body[key];
+    }
   }
   data.confirmDuplicate = body.confirmDuplicate === true;
   if (partial && !Object.keys(data).some((key) => key !== 'confirmDuplicate')) return { ok: false, error: 'No supported fields supplied' };

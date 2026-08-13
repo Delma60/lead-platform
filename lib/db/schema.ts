@@ -31,6 +31,8 @@ export const leads = pgTable('leads', {
   isDuplicate: boolean('is_duplicate').default(false),
   rateScope: text('rate_scope'), // what was quoted, project size
   contractStatus: varchar('contract_status', { length: 50 }), // contract signed, deposit paid, etc.
+  contractSigned: boolean('contract_signed').default(false).notNull(),
+  depositPaid: boolean('deposit_paid').default(false).notNull(),
   lastContactedAt: timestamp('last_contacted_at'),
   repliedAt: timestamp('replied_at'),
   replyTimeInDays: integer('reply_time_in_days'), // calculated: repliedAt - lastContactedAt
