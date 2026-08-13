@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { LeadsBoard, type ClientLead } from '@/components/LeadsBoard';
 import { leadSources, leadStatuses, rejectionReasons } from '@/lib/db/schema';
 
-type FormState = { company: string; contactName: string; contactEmail: string; contactPhone: string; source: string; status: string; priority: string; followUpDate: string; notes: string; rejectionReason: string; referralSourceLead: string; rateScope: string; contractSigned: boolean; depositPaid: boolean };
-const emptyForm: FormState = { company: '', contactName: '', contactEmail: '', contactPhone: '', source: 'Other', status: 'New', priority: '3', followUpDate: '', notes: '', rejectionReason: '', referralSourceLead: '', rateScope: '', contractSigned: false, depositPaid: false };
+type FormState = { company: string; companyUrl: string; contactName: string; contactEmail: string; contactPhone: string; source: string; status: string; priority: string; followUpDate: string; notes: string; rejectionReason: string; referralSourceLead: string; rateScope: string; contractSigned: boolean; depositPaid: boolean };
+const emptyForm: FormState = { company: '', companyUrl: '', contactName: '', contactEmail: '', contactPhone: '', source: 'Other', status: 'New', priority: '3', followUpDate: '', notes: '', rejectionReason: '', referralSourceLead: '', rateScope: '', contractSigned: false, depositPaid: false };
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<ClientLead[]>([]);
@@ -35,7 +35,7 @@ export default function LeadsPage() {
   function openNew() { setEditing(null); setForm(emptyForm); setError(''); setDuplicateWarning(false); setModalOpen(true); }
   function openEdit(lead: ClientLead) {
     setEditing(lead);
-    setForm({ company: lead.company, contactName: lead.contactName, contactEmail: lead.contactEmail, contactPhone: lead.contactPhone ?? '', source: lead.source ?? 'Other', status: lead.status, priority: String(lead.priority ?? 3), followUpDate: lead.followUpDate?.slice(0, 10) ?? '', notes: lead.notes ?? '', rejectionReason: lead.rejectionReason ?? '', referralSourceLead: String(lead.referralSourceLead ?? ''), rateScope: lead.rateScope ?? '', contractSigned: lead.contractSigned, depositPaid: lead.depositPaid });
+    setForm({ company: lead.company, companyUrl: lead.companyUrl ?? '', contactName: lead.contactName, contactEmail: lead.contactEmail, contactPhone: lead.contactPhone ?? '', source: lead.source ?? 'Other', status: lead.status, priority: String(lead.priority ?? 3), followUpDate: lead.followUpDate?.slice(0, 10) ?? '', notes: lead.notes ?? '', rejectionReason: lead.rejectionReason ?? '', referralSourceLead: String(lead.referralSourceLead ?? ''), rateScope: lead.rateScope ?? '', contractSigned: lead.contractSigned, depositPaid: lead.depositPaid });
     setError(''); setDuplicateWarning(false); setModalOpen(true);
   }
 
@@ -92,6 +92,7 @@ export default function LeadsPage() {
           <div className="mb-5 flex justify-between gap-4"><div><h2 id="lead-dialog-title" className="text-xl font-bold">{editing ? 'Edit lead' : 'Add lead'}</h2><p className="mt-1 text-sm text-slate-500">Keep the next action obvious and scheduled.</p></div><button type="button" aria-label="Close" className="text-2xl text-slate-400" onClick={() => setModalOpen(false)}>×</button></div>
           <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
             {([['company','Company'],['contactName','Contact name'],['contactEmail','Email'],['contactPhone','Phone']] as const).map(([name,label]) => <label key={name} className="text-sm font-medium text-slate-700">{label}{name !== 'contactPhone' && ' *'}<input className="input mt-1" name={name} type={name === 'contactEmail' ? 'email' : 'text'} required={name !== 'contactPhone'} value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })} /></label>)}
+            <label className="text-sm font-medium text-slate-700 sm:col-span-2">Company URL<input className="input mt-1" type="url" placeholder="https://example.com" value={form.companyUrl} onChange={(e) => setForm({ ...form, companyUrl: e.target.value })} /></label>
             <label className="text-sm font-medium text-slate-700">Source<select className="input mt-1" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>{leadSources.map((source) => <option key={source}>{source}</option>)}</select></label>
             <label className="text-sm font-medium text-slate-700">Status<select className="input mt-1" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>{leadStatuses.map((status) => <option key={status}>{status}</option>)}</select></label>
             <label className="text-sm font-medium text-slate-700">Priority (1–5)<input className="input mt-1" type="number" min="1" max="5" required value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} /></label>

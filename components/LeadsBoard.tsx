@@ -32,6 +32,7 @@ function LeadCard({ lead, onEdit, onStatusChange }: { lead: ClientLead } & Pick<
         <span className="block truncate text-xs text-slate-500">{lead.contactEmail}</span>
       </button>
       <div className="mt-3 flex flex-wrap gap-1.5">
+        {lead.source && <span className="badge bg-sky-50 text-sky-700">{lead.contactEmail.endsWith('@invalid.local') ? `${lead.source} auto-match` : lead.source}</span>}
         {lead.priority && <span className="badge bg-indigo-50 text-indigo-700">Priority {lead.priority}</span>}
         {lead.isDuplicate && <span className="badge bg-amber-50 text-amber-800">Possible duplicate</span>}
         {lead.isOverdue && <span className="badge bg-rose-50 text-rose-700">Overdue</span>}

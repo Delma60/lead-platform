@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
       db.select().from(templates).where(eq(templates.id, templateId)).limit(1),
     ]);
     if (!lead || !template) return NextResponse.json({ error: 'Lead or template not found' }, { status: 404 });
+    if (lead.contactEmail.endsWith('@invalid.local')) return NextResponse.json({ error: 'Add a verified contact email before sending' }, { status: 400 });
     const merged = { company: lead.company, contactName: lead.contactName, contactEmail: lead.contactEmail, ...variables };
     const subject = renderTemplate(template.subject, merged);
     const renderedBody = renderTemplate(template.body, merged);

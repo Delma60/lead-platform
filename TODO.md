@@ -44,20 +44,39 @@
 - [x] Contract/deposit status flags once "Won" (contract signed, deposit paid)
 
 ## Phase 6: AI-assisted outreach (human-approved, not autonomous send)
-- [ ] AI research step: given a lead's company/URL, summarize what they do + likely pain points (uses web search)
-- [ ] AI draft step: generate a personalized pitch from a chosen template + lead notes + research summary
-- [ ] Draft lands in a "Needs review" queue — never sends without a manual approve click
-- [ ] AI reply-triage: when Gmail API detects a reply, summarize it and suggest next status (Replied/Won/Lost) for you to confirm
-- [ ] AI suggests best-fit template per lead based on past reply-rate data (Phase 4 data feeds this)
+- [x] AI research step: given a lead's company/URL, summarize what they do + likely pain points (uses web search)
+  - [x] Backend research endpoint with OpenAI web search and persisted research summary
+  - [x] AI workspace action and research-result UI
+- [x] AI draft step: generate a personalized pitch from a chosen template + lead notes + research summary
+  - [x] Backend draft endpoint using the selected/recommended template and lead context
+  - [x] AI workspace draft action and editor UI
+- [x] Draft lands in a "Needs review" queue — never sends without a manual approve click
+  - [x] Review table plus list and approve/reject endpoints; AI drafts are never auto-sent
+  - [x] Human review queue UI and separately confirmed approved-draft send workflow
+- [x] AI reply-triage: summarize an inbound reply and suggest next status (Replied/Won/Lost) for you to confirm
+  - [x] Manual reply-text triage endpoint and human-confirmed status update
+  - [x] Manual reply ingestion; automated Gmail detection remains scoped to Phase 8
+  - [x] Reply-triage review UI
+- [x] AI suggests best-fit template per lead based on past reply-rate data (Phase 4 data feeds this)
+  - [x] Backend recommendation scoring based on lead relevance and historical reply rates
+  - [x] Recommendation UI in the AI workspace
 
 ## Phase 6.5: Lead Finder (automated sourcing, human-reviewed import)
-- [ ] RemoteOK API integration (`remoteok.com/api`, free, no auth) — required attribution: link back to listing + credit RemoteOK
-- [ ] Keyword filter layer — match on fintech/payments/wallet/banking/lending terms in title+description (raw feed is noisy — most postings are irrelevant, filtering is essential not optional)
-- [ ] GitHub Search API — issues/repos tagged "help wanted" + fintech/payments keywords
-- [ ] Dedup against existing `leads` table before import (reuse Phase 2 dedup logic)
-- [ ] Matches land in board as "New" with source tagged (e.g. "RemoteOK auto-match") — never auto-contacted
-- [ ] Manual "Import as lead" action per match, not bulk auto-import
-- [ ] Note: Upwork/Toptal/Wellfound have no accessible public API — stay manual (browse + paste link) for these
+- [x] RemoteOK API integration (`remoteok.com/api`, free, no auth) — required attribution: link back to listing + credit RemoteOK
+  - [x] Backend RemoteOK feed integration with listing URL and attribution data
+  - [x] Finder UI displaying the required listing link and RemoteOK credit
+- [x] Keyword filter layer — match on fintech/payments/wallet/banking/lending terms in title+description (raw feed is noisy — most postings are irrelevant, filtering is essential not optional)
+- [x] GitHub Search API — issues/repos tagged "help wanted" + fintech/payments keywords
+  - [x] Backend search for matching public `help wanted` issues and relevant repositories
+  - [x] Finder results UI, progressive pagination, and source/rate-limit feedback
+- [x] Dedup against existing `leads` table before import using company and source-listing URL
+- [x] Matches land in board as "New" with source tagged (e.g. "RemoteOK auto-match") — never auto-contacted
+  - [x] Imported matches use `New` status and RemoteOK/GitHub source tags
+  - [x] Explicit auto-match labeling and protection against sending to placeholder contact emails
+- [x] Manual "Import as lead" action per match, not bulk auto-import
+  - [x] Single-match import endpoint; no bulk or automatic import path exists
+  - [x] Per-match import button and finder UI
+- [x] Note: Upwork/Toptal/Wellfound have no accessible public API — stay manual (browse + paste link) for these
 
 ## Phase 7: Marketing / content tool
 - [ ] `content` table (platform, draft text, status: draft/scheduled/posted, scheduled_at, posted_at, related_repo/case_study)

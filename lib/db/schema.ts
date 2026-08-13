@@ -94,7 +94,7 @@ export const aiReviews = pgTable('ai_reviews', {
   output: text('output').notNull(),
   sourceText: text('source_text'),
   suggestedStatus: varchar('suggested_status', { enum: leadStatuses, length: 20 }),
-  status: varchar('status', { enum: ['needs_review', 'approved', 'rejected'], length: 30 }).default('needs_review').notNull(),
+  status: varchar('status', { enum: ['needs_review', 'approved', 'rejected', 'sent'], length: 30 }).default('needs_review').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
