@@ -31,6 +31,9 @@ npm install
 ```
 
 ### 3. **Database Setup**
+
+Application tables are isolated in the `lead_platform_app` PostgreSQL schema. This prevents collisions when a Neon database already contains unrelated `public` tables.
+
 ```bash
 # Generate Drizzle migrations from schema
 npx drizzle-kit generate

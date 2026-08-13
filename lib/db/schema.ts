@@ -1,4 +1,6 @@
-import { pgTable, text, serial, varchar, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
+import { pgSchema, text, serial, varchar, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
+
+export const appSchema = pgSchema('lead_platform_app');
 
 export const leadStatuses = ['New', 'Contacted', 'Replied', 'Won', 'Lost'] as const;
 export const leadSources = ['Upwork', 'Wellfound', 'Cold', 'Referral', 'RemoteOK', 'GitHub', 'Other'] as const;
@@ -8,7 +10,7 @@ export const rejectionReasons = ['Budget', 'Agency', 'Timing', 'No reply', 'Othe
 /**
  * Leads table: Core lead pipeline data
  */
-export const leads = pgTable('leads', {
+export const leads = appSchema.table('leads', {
   id: serial('id').primaryKey(),
   company: varchar('company', { length: 255 }).notNull(),
   contactName: varchar('contact_name', { length: 255 }).notNull(),
@@ -47,7 +49,7 @@ export const leads = pgTable('leads', {
 /**
  * Templates table: Email templates with variants
  */
-export const templates = pgTable('templates', {
+export const templates = appSchema.table('templates', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   subject: varchar('subject', { length: 500 }).notNull(),
@@ -67,7 +69,7 @@ export const templates = pgTable('templates', {
 /**
  * SendLog table: Track all sent emails with template reference
  */
-export const sendLog = pgTable('send_log', {
+export const sendLog = appSchema.table('send_log', {
   id: serial('id').primaryKey(),
   leadId: integer('lead_id').notNull(), // FK to leads.id
   templateId: integer('template_id'), // FK to templates.id (nullable if custom email)
@@ -85,7 +87,7 @@ export const sendLog = pgTable('send_log', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const aiReviews = pgTable('ai_reviews', {
+export const aiReviews = appSchema.table('ai_reviews', {
   id: serial('id').primaryKey(),
   leadId: integer('lead_id').notNull(),
   templateId: integer('template_id'),
@@ -102,7 +104,7 @@ export const aiReviews = pgTable('ai_reviews', {
 /**
  * Content table: Social media & blog post tracking
  */
-export const content = pgTable('content', {
+export const content = appSchema.table('content', {
   id: serial('id').primaryKey(),
   platform: varchar('platform', {
     enum: ['LinkedIn', 'X', 'Blog'],
@@ -130,7 +132,7 @@ export const content = pgTable('content', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const contentIdeas = pgTable('content_ideas', {
+export const contentIdeas = appSchema.table('content_ideas', {
   id: serial('id').primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
   angle: text('angle'),
@@ -140,7 +142,7 @@ export const contentIdeas = pgTable('content_ideas', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const inboundMessages = pgTable('inbound_messages', {
+export const inboundMessages = appSchema.table('inbound_messages', {
   id: serial('id').primaryKey(),
   gmailMessageId: varchar('gmail_message_id', { length: 255 }).notNull().unique(),
   gmailThreadId: varchar('gmail_thread_id', { length: 255 }).notNull(),
