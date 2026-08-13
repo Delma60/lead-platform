@@ -52,7 +52,9 @@ export default function SettingsPage() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
+  }, [load]);
 
   async function save(event: FormEvent, group: Group) {
     event.preventDefault(); setSaving(group.name); setError(''); setNotice('');

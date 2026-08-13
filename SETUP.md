@@ -8,22 +8,15 @@
 cp .env.example .env.local
 ```
 
-Edit `.env.local` with:
-- `DATABASE_URL`: Your Neon Postgres connection string (get from [neon.tech](https://neon.tech))
-- `GMAIL_USER`: Your Gmail address
-- `GMAIL_APP_PASSWORD`: An [App Password from Google Account](https://support.google.com/accounts/answer/185833) (not your regular password)
-- `OPENAI_API_KEY`: OpenAI API key used by research, drafting, and reply triage
-- `OPENAI_MODEL`: Optional Responses API model override (defaults to `gpt-5.4-mini`)
-- `GITHUB_TOKEN`: Optional token that raises Lead Finder search rate limits
-- `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_AUTHOR_URN`, `LINKEDIN_API_VERSION`: LinkedIn registered-app publishing credentials
-- `X_ACCESS_TOKEN`: X OAuth 2.0 user access token with post read/write scopes
+Edit `.env.local` with only the deployment bootstrap values:
+- `DATABASE_URL`: Your Neon Postgres connection string
+- `ADMIN_PASSWORD`: Password for the private workspace
+- `AUTH_SECRET`: Random secret of at least 32 characters; signs sessions and encrypts connected-app credentials
 - `CRON_SECRET`: Random 16+ character secret used to authenticate every cron endpoint
-- `ADMIN_PASSWORD`: Private workspace password
-- `AUTH_SECRET`: Random signing secret (generate at least 32 random bytes)
-- `GMAIL_OAUTH_CLIENT_ID`, `GMAIL_OAUTH_CLIENT_SECRET`, `GMAIL_OAUTH_REFRESH_TOKEN`: Google OAuth credentials with the `gmail.readonly` scope for reply sync
-- `DIGEST_EMAIL`: Optional digest recipient; defaults to `GMAIL_USER`
 
-Enable the Gmail API in Google Cloud, configure its OAuth consent screen, and obtain an offline refresh token for the Gmail account using the read-only Gmail scope. Add all Phase 8 secrets to the Vercel production environment. Cron requests are authenticated by Vercel with `CRON_SECRET`.
+After applying migrations and signing in, open `/settings` to configure Gmail, OpenAI, GitHub, RemoteOK, LinkedIn, X, and the digest recipient. Secret fields are encrypted at rest and are never returned to the browser. Do not rotate `AUTH_SECRET` until you have re-entered or removed the encrypted connected-app credentials.
+
+Enable the Gmail API in Google Cloud, configure its OAuth consent screen, obtain an offline refresh token with the read-only Gmail scope, and save it on the Connected Apps page. Cron requests are authenticated by Vercel with `CRON_SECRET`.
 
 Phase 8 schedules are UTC: Gmail sync every 15 minutes, approved content publishing hourly, and the action digest daily at 16:00 UTC. Gmail sync only matches replies from known contacted leads, marks them `Replied`, and creates a human review item for any AI-suggested Won/Lost transition.
 

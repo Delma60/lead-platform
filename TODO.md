@@ -95,10 +95,10 @@
 - [x] Daily digest email to self (leads needing action, replies pending review, content due for review)
 
 ## Phase 9: Polish
-- [ ] Auth (so it's not wide open if deployed) â€” NextAuth or simple password gate
-- [ ] Basic analytics dashboard (`/app/dashboard`) â€” lead funnel, source breakdown, template performance, content performance
+- [x] Auth (signed, HTTP-only single-admin session with protected pages and APIs)
+- [x] Basic analytics dashboard (`/app/dashboard`) â€” lead funnel, source breakdown, template performance, content performance
 - [ ] Deploy (Vercel) + connect Neon production branch
-- [ ] Mobile-responsive board view
+- [x] Mobile-responsive board view
 
 ## Content to prep (not code)
 - [ ] Deploy a small live demo (wallet or VTU flow) to link in pitches

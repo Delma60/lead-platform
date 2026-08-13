@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
     const message = delivered
       ? 'Email was delivered, but tracking could not be updated. Do not resend.'
-      : error instanceof Error && error.message === 'Gmail SMTP is not configured' ? error.message : 'Failed to send email';
+      : error instanceof Error && error.message.startsWith('Gmail SMTP is not configured') ? error.message : 'Failed to send email';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
