@@ -31,6 +31,13 @@ const groups: Group[] = [
   { name: 'X', description: 'OAuth user token used for approved publishing and metrics.', fields: [
     { key: 'xAccessToken', label: 'Access token', secret: true },
   ] },
+  { name: 'Meta', description: 'Facebook Page publishing, Lead Ads retrieval, and opt-in WhatsApp template messages.', fields: [
+    { key: 'metaGraphVersion', label: 'Graph API version', placeholder: 'v23.0' },
+    { key: 'facebookPageId', label: 'Facebook Page ID' },
+    { key: 'facebookPageAccessToken', label: 'Page access token', secret: true },
+    { key: 'whatsappPhoneNumberId', label: 'WhatsApp phone number ID' },
+    { key: 'whatsappAccessToken', label: 'WhatsApp access token', secret: true },
+  ] },
 ];
 
 export default function SettingsPage() {

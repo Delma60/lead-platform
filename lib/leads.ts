@@ -8,6 +8,7 @@ export type LeadInput = {
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
+  whatsappOptInAt?: Date | null;
   companyUrl?: string;
   status?: (typeof leadStatuses)[number];
   source?: (typeof leadSources)[number];
@@ -57,6 +58,11 @@ export function parseLeadInput(value: unknown, partial: boolean): { ok: true; da
     if (body.followUpDate === null || body.followUpDate === '') data.followUpDate = null;
     else if (typeof body.followUpDate === 'string' && !Number.isNaN(Date.parse(body.followUpDate))) data.followUpDate = new Date(body.followUpDate);
     else return { ok: false, error: 'Invalid follow-up date' };
+  }
+  if (hasOwn(body, 'whatsappOptInAt')) {
+    if (body.whatsappOptInAt === null || body.whatsappOptInAt === '') data.whatsappOptInAt = null;
+    else if (typeof body.whatsappOptInAt === 'string' && !Number.isNaN(Date.parse(body.whatsappOptInAt))) data.whatsappOptInAt = new Date(body.whatsappOptInAt);
+    else return { ok: false, error: 'Invalid WhatsApp opt-in date' };
   }
   if (hasOwn(body, 'rejectionReason')) {
     if (body.rejectionReason === null || body.rejectionReason === '') data.rejectionReason = null;

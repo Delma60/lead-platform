@@ -9,6 +9,15 @@ async function apiError(response: Response) {
 }
 
 export async function publishPost(post: ContentPost): Promise<PublishResult> {
+  if (post.platform === 'Facebook') {
+    const { metaGraphVersion, facebookPageId, facebookPageAccessToken } = await getSettings(['metaGraphVersion', 'facebookPageId', 'facebookPageAccessToken']);
+    if (!facebookPageId || !facebookPageAccessToken) throw new Error('Facebook Page publishing is not configured in Settings');
+    const response = await fetch(`https://graph.facebook.com/${metaGraphVersion || 'v23.0'}/${facebookPageId}/feed`, { method: 'POST', headers: { Authorization: `Bearer ${facebookPageAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: post.draftText }) });
+    if (!response.ok) throw new Error(`Facebook publish failed: ${await apiError(response)}`);
+    const body = await response.json() as { id?: string };
+    if (!body.id) throw new Error('Facebook returned no post ID');
+    return { platformId: body.id, platformUrl: `https://www.facebook.com/${body.id.replace('_', '/posts/')}` };
+  }
   if (post.platform === 'X') {
     const { xAccessToken } = await getSettings(['xAccessToken']);
     if (!xAccessToken) throw new Error('X is not configured in Settings');

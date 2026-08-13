@@ -3,7 +3,7 @@ import { pgSchema, text, serial, varchar, timestamp, integer, boolean } from 'dr
 export const appSchema = pgSchema('lead_platform_app');
 
 export const leadStatuses = ['New', 'Contacted', 'Replied', 'Won', 'Lost'] as const;
-export const leadSources = ['Upwork', 'Wellfound', 'Cold', 'Referral', 'RemoteOK', 'GitHub', 'Other'] as const;
+export const leadSources = ['Upwork', 'Wellfound', 'Cold', 'Referral', 'RemoteOK', 'GitHub', 'Facebook', 'Other'] as const;
 export const templateVariants = ['SDK story', 'wallet story', 'lending story', 'general'] as const;
 export const rejectionReasons = ['Budget', 'Agency', 'Timing', 'No reply', 'Other'] as const;
 
@@ -16,6 +16,7 @@ export const leads = appSchema.table('leads', {
   contactName: varchar('contact_name', { length: 255 }).notNull(),
   contactEmail: varchar('contact_email', { length: 255 }).notNull(),
   contactPhone: varchar('contact_phone', { length: 20 }),
+  whatsappOptInAt: timestamp('whatsapp_opt_in_at'),
   companyUrl: varchar('company_url', { length: 1000 }),
   status: varchar('status', {
     enum: leadStatuses,
@@ -107,7 +108,7 @@ export const aiReviews = appSchema.table('ai_reviews', {
 export const content = appSchema.table('content', {
   id: serial('id').primaryKey(),
   platform: varchar('platform', {
-    enum: ['LinkedIn', 'X', 'Blog'],
+    enum: ['LinkedIn', 'X', 'Facebook', 'Blog'],
     length: 50,
   }).notNull(),
   draftText: text('draft_text').notNull(),
@@ -161,6 +162,18 @@ export const appSettings = appSchema.table('app_settings', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const whatsappMessages = appSchema.table('whatsapp_messages', {
+  id: serial('id').primaryKey(),
+  leadId: integer('lead_id').notNull(),
+  recipientPhone: varchar('recipient_phone', { length: 30 }).notNull(),
+  templateName: varchar('template_name', { length: 512 }).notNull(),
+  languageCode: varchar('language_code', { length: 20 }).notNull(),
+  metaMessageId: varchar('meta_message_id', { length: 255 }),
+  status: varchar('status', { enum: ['sent', 'failed'], length: 20 }).notNull(),
+  error: text('error'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Export types for use in application
 export type Lead = typeof leads.$inferSelect;
 export type NewLead = typeof leads.$inferInsert;
@@ -174,4 +187,5 @@ export type ContentPost = typeof content.$inferSelect;
 export type NewContentPost = typeof content.$inferInsert;
 export type ContentIdea = typeof contentIdeas.$inferSelect;
 export type NewContentIdea = typeof contentIdeas.$inferInsert;
+export type WhatsappMessage = typeof whatsappMessages.$inferSelect;
 export type InboundMessage = typeof inboundMessages.$inferSelect;

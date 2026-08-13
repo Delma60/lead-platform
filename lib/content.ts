@@ -7,7 +7,7 @@ export function parseContentInput(value: unknown, partial = false): { ok: true; 
   const body = value as Record<string, unknown>;
   const data: ContentInput = {};
   if ('platform' in body) {
-    if (!['LinkedIn', 'X', 'Blog'].includes(String(body.platform))) return { ok: false, error: 'Invalid platform' };
+    if (!['LinkedIn', 'X', 'Facebook', 'Blog'].includes(String(body.platform))) return { ok: false, error: 'Invalid platform' };
     data.platform = body.platform as ContentInput['platform'];
   }
   for (const [key, limit] of [['draftText', 20_000], ['sourcePrompt', 10_000], ['relatedRepo', 255], ['relatedCaseStudy', 255], ['platformUrl', 1000]] as const) {
@@ -29,4 +29,3 @@ export function parseContentInput(value: unknown, partial = false): { ok: true; 
   if (partial && !Object.keys(data).length) return { ok: false, error: 'No supported fields supplied' };
   return { ok: true, data };
 }
-

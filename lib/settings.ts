@@ -18,6 +18,11 @@ export const settingDefinitions = {
   linkedinAuthorUrn: { env: 'LINKEDIN_AUTHOR_URN', secret: false },
   linkedinApiVersion: { env: 'LINKEDIN_API_VERSION', secret: false },
   xAccessToken: { env: 'X_ACCESS_TOKEN', secret: true },
+  metaGraphVersion: { env: 'META_GRAPH_VERSION', secret: false },
+  facebookPageId: { env: 'FACEBOOK_PAGE_ID', secret: false },
+  facebookPageAccessToken: { env: 'FACEBOOK_PAGE_ACCESS_TOKEN', secret: true },
+  whatsappPhoneNumberId: { env: 'WHATSAPP_PHONE_NUMBER_ID', secret: false },
+  whatsappAccessToken: { env: 'WHATSAPP_ACCESS_TOKEN', secret: true },
 } as const;
 
 export type SettingKey = keyof typeof settingDefinitions;

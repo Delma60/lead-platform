@@ -53,7 +53,7 @@ export async function GET() {
       winRate: reached.Replied ? Math.round((reached.Won / reached.Replied) * 100) : 0,
     };
     const postedContent = contentRows.filter((post) => post.status === 'posted');
-    const contentPerformance = (['LinkedIn', 'X', 'Blog'] as const).map((platform) => {
+    const contentPerformance = (['LinkedIn', 'X', 'Facebook', 'Blog'] as const).map((platform) => {
       const posts = postedContent.filter((post) => post.platform === platform);
       return { platform, posts: posts.length, likes: posts.reduce((sum, post) => sum + (post.likes ?? 0), 0), comments: posts.reduce((sum, post) => sum + (post.comments ?? 0), 0), reposts: posts.reduce((sum, post) => sum + (post.reposts ?? 0), 0), clicks: posts.reduce((sum, post) => sum + post.clicks, 0) };
     });

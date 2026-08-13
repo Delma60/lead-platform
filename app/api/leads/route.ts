@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
       contactName,
       contactEmail,
       contactPhone: normalizeOptionalText(parsed.data.contactPhone),
+      whatsappOptInAt: parsed.data.whatsappOptInAt ?? null,
       companyUrl: normalizeOptionalText(parsed.data.companyUrl),
       source: parsed.data.source ?? leadSources.at(-1),
       status: parsed.data.status ?? 'New',

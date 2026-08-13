@@ -37,6 +37,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       ...(update.contactName !== undefined && { contactName: update.contactName }),
       ...(update.contactEmail !== undefined && { contactEmail: update.contactEmail }),
       ...(update.contactPhone !== undefined && { contactPhone: normalizeOptionalText(update.contactPhone) }),
+      ...(update.whatsappOptInAt !== undefined && { whatsappOptInAt: update.whatsappOptInAt }),
       ...(update.companyUrl !== undefined && { companyUrl: normalizeOptionalText(update.companyUrl) }),
       ...(update.status !== undefined && { status: update.status }),
       ...(update.source !== undefined && { source: update.source }),
