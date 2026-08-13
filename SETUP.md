@@ -15,6 +15,9 @@ Edit `.env.local` with:
 - `OPENAI_API_KEY`: OpenAI API key used by research, drafting, and reply triage
 - `OPENAI_MODEL`: Optional Responses API model override (defaults to `gpt-5.4-mini`)
 - `GITHUB_TOKEN`: Optional token that raises Lead Finder search rate limits
+- `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_AUTHOR_URN`, `LINKEDIN_API_VERSION`: LinkedIn registered-app publishing credentials
+- `X_ACCESS_TOKEN`: X OAuth 2.0 user access token with post read/write scopes
+- `CRON_SECRET`: Random 16+ character secret used to authenticate scheduled publishing
 
 ### 2. **Install Dependencies**
 ```bash

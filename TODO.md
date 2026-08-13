@@ -79,14 +79,14 @@
 - [x] Note: Upwork/Toptal/Wellfound have no accessible public API — stay manual (browse + paste link) for these
 
 ## Phase 7: Marketing / content tool
-- [ ] `content` table (platform, draft text, status: draft/scheduled/posted, scheduled_at, posted_at, related_repo/case_study)
-- [ ] `/app/content` — content calendar view (list or calendar grid) of drafts and scheduled posts
-- [ ] AI draft step: generate post drafts (LinkedIn/X) from your repo work, case studies, or a topic prompt
-- [ ] Manual review/edit step before anything goes out — same "needs review" pattern as email
-- [ ] Platform connections: LinkedIn API and X/Twitter API for posting (each requires its own developer app + OAuth — proper registered access, not a workaround)
-- [ ] Scheduling: queue a reviewed post for a future date/time (cron job publishes at the scheduled time)
-- [ ] Post performance tracking (likes/comments/reposts where the platform API provides it) to see what content actually lands
-- [ ] Content ideas backlog — running list of case-study angles, technical write-up topics, "build in public" updates from current project work
+- [x] `content` table (platform, draft text, status: draft/scheduled/posted, scheduled_at, posted_at, related_repo/case_study)
+- [x] `/app/content` — content calendar view (list or calendar grid) of drafts and scheduled posts
+- [x] AI draft step: generate post drafts (LinkedIn/X) from your repo work, case studies, or a topic prompt
+- [x] Manual review/edit step before anything goes out — same "needs review" pattern as email
+- [x] Platform connections: LinkedIn API and X/Twitter API posting adapters using registered-app OAuth access tokens
+- [x] Scheduling: queue a reviewed post for a future date/time (protected Vercel Cron publishes scheduled content)
+- [x] Post performance tracking (automatic X public metrics plus manual fallback where platform access is restricted)
+- [x] Content ideas backlog — running list of case-study angles, technical write-up topics, "build in public" updates from current project work
 
 ## Phase 8: Automation infrastructure (still human-gated)
 - [ ] Gmail API (OAuth2) integration — read replies, auto-update status

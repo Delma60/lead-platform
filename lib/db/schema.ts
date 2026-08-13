@@ -110,7 +110,7 @@ export const content = pgTable('content', {
   }).notNull(),
   draftText: text('draft_text').notNull(),
   status: varchar('status', {
-    enum: ['draft', 'scheduled', 'posted'],
+    enum: ['draft', 'scheduled', 'publishing', 'posted'],
     length: 20,
   }).default('draft'),
   reviewStatus: varchar('review_status', { enum: ['needs_review', 'approved', 'rejected'], length: 30 }).default('needs_review').notNull(),
@@ -140,6 +140,19 @@ export const contentIdeas = pgTable('content_ideas', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const inboundMessages = pgTable('inbound_messages', {
+  id: serial('id').primaryKey(),
+  gmailMessageId: varchar('gmail_message_id', { length: 255 }).notNull().unique(),
+  gmailThreadId: varchar('gmail_thread_id', { length: 255 }).notNull(),
+  leadId: integer('lead_id').notNull(),
+  senderEmail: varchar('sender_email', { length: 255 }).notNull(),
+  subject: varchar('subject', { length: 500 }),
+  body: text('body').notNull(),
+  receivedAt: timestamp('received_at').notNull(),
+  reviewId: integer('review_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Export types for use in application
 export type Lead = typeof leads.$inferSelect;
 export type NewLead = typeof leads.$inferInsert;
@@ -153,3 +166,4 @@ export type ContentPost = typeof content.$inferSelect;
 export type NewContentPost = typeof content.$inferInsert;
 export type ContentIdea = typeof contentIdeas.$inferSelect;
 export type NewContentIdea = typeof contentIdeas.$inferInsert;
+export type InboundMessage = typeof inboundMessages.$inferSelect;

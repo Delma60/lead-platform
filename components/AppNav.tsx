@@ -6,6 +6,7 @@ const links = [
   ['AI workspace', '/ai'],
   ['Lead finder', '/finder'],
   ['Templates', '/templates'],
+  ['Content', '/content'],
 ];
 
 export function AppNav() {
