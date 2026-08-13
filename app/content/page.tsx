@@ -1,56 +1,46 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import type { ContentIdea, ContentPost } from '@/lib/db/schema';
 
-/**
- * /app/content
- * Social media & blog post management
- * TODO: Content calendar view (list or calendar grid)
- * TODO: Post drafts (LinkedIn/X) generation
- * TODO: Platform connections (LinkedIn API, X/Twitter API)
- * TODO: Scheduling queue for future posts
- * TODO: Performance tracking (likes/comments/reposts)
- * TODO: Content ideas backlog
- */
+type ClientPost = Omit<ContentPost, 'scheduledAt' | 'postedAt' | 'performanceUpdatedAt' | 'createdAt' | 'updatedAt'> & { scheduledAt: string | null; postedAt: string | null; performanceUpdatedAt: string | null; createdAt: string; updatedAt: string };
+type ClientIdea = Omit<ContentIdea, 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string };
+const blank = { platform: 'LinkedIn', draftText: '', sourcePrompt: '', relatedRepo: '', relatedCaseStudy: '', reviewStatus: 'needs_review', scheduledAt: '' };
+
 export default function ContentPage() {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<ClientPost[]>([]); const [ideas, setIdeas] = useState<ClientIdea[]>([]);
+  const [loading, setLoading] = useState(true); const [busy, setBusy] = useState(''); const [error, setError] = useState(''); const [notice, setNotice] = useState('');
+  const [view, setView] = useState<'list' | 'calendar'>('list'); const [filter, setFilter] = useState('all');
+  const [editor, setEditor] = useState<ClientPost | null>(null); const [creating, setCreating] = useState(false); const [form, setForm] = useState(blank);
+  const [ideaTitle, setIdeaTitle] = useState(''); const [ideaAngle, setIdeaAngle] = useState(''); const [ideaSource, setIdeaSource] = useState('Build in public');
+  const [generationPrompt, setGenerationPrompt] = useState(''); const [generationPlatform, setGenerationPlatform] = useState('LinkedIn'); const [generationIdea, setGenerationIdea] = useState('');
 
-  useEffect(() => {
-    fetchContent();
-  }, []);
+  const load = useCallback(async () => { try { const [postResponse, ideaResponse] = await Promise.all([fetch('/api/content'), fetch('/api/content/ideas')]); const [postData, ideaData] = await Promise.all([postResponse.json(), ideaResponse.json()]); if (!postResponse.ok) throw new Error(postData.error ?? 'Could not load content'); if (!ideaResponse.ok) throw new Error(ideaData.error ?? 'Could not load ideas'); setPosts(postData); setIdeas(ideaData); } catch (value) { setError(value instanceof Error ? value.message : 'Could not load content'); } finally { setLoading(false); } }, []);
+  useEffect(() => { // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
+  }, [load]);
 
-  async function fetchContent() {
-    try {
-      // TODO: Create /api/content endpoint
-      setPosts([]);
-    } catch (error) {
-      console.error('Error fetching content:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const visiblePosts = useMemo(() => posts.filter((post) => filter === 'all' || post.status === filter || post.platform === filter), [posts, filter]);
+  function openPost(post?: ClientPost) { setEditor(post ?? null); setCreating(!post); setForm(post ? { platform: post.platform, draftText: post.draftText, sourcePrompt: post.sourcePrompt ?? '', relatedRepo: post.relatedRepo ?? '', relatedCaseStudy: post.relatedCaseStudy ?? '', reviewStatus: post.reviewStatus, scheduledAt: post.scheduledAt ? new Date(post.scheduledAt).toISOString().slice(0, 16) : '' } : blank); setError(''); }
+  async function request(url: string, options: RequestInit, success: string) { setBusy(url); setError(''); setNotice(''); try { const response = await fetch(url, options); const data = response.status === 204 ? null : await response.json(); if (!response.ok) throw new Error(data?.error ?? 'Request failed'); setNotice(success); await load(); return data; } catch (value) { setError(value instanceof Error ? value.message : 'Request failed'); return null; } finally { setBusy(''); } }
 
-  if (loading) {
-    return <div className="p-8">Loading content...</div>;
-  }
+  async function save(event: FormEvent) { event.preventDefault(); const payload = { ...form, scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null }; const url = editor ? `/api/content/${editor.id}` : '/api/content'; const data = await request(url, { method: editor ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }, editor ? 'Content updated.' : 'Draft created.'); if (data) { setEditor(null); setCreating(false); } }
+  async function generate() { const idea = ideas.find((item) => String(item.id) === generationIdea); const prompt = generationPrompt.trim() || (idea ? `${idea.title}\n${idea.angle ?? ''}` : ''); if (!prompt) { setError('Add a prompt or select an idea.'); return; } const data = await request('/api/content/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform: generationPlatform, prompt, ...(idea && { ideaId: idea.id }) }) }, 'AI draft added for review.'); if (data) { setGenerationPrompt(''); setGenerationIdea(''); } }
+  async function addIdea(event: FormEvent) { event.preventDefault(); const data = await request('/api/content/ideas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: ideaTitle, angle: ideaAngle, source: ideaSource }) }, 'Idea added.'); if (data) { setIdeaTitle(''); setIdeaAngle(''); } }
+  async function metrics(post: ClientPost) { if (post.platform === 'X') { await request(`/api/content/${post.id}/metrics`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }, 'Performance refreshed from X.'); return; } const likes = window.prompt('Likes', String(post.likes ?? 0)); if (likes === null) return; const comments = window.prompt('Comments', String(post.comments ?? 0)); const reposts = window.prompt('Reposts', String(post.reposts ?? 0)); const clicks = window.prompt('Clicks', String(post.clicks ?? 0)); await request(`/api/content/${post.id}/metrics`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ manual: true, likes: Number(likes), comments: Number(comments), reposts: Number(reposts), clicks: Number(clicks) }) }, 'Performance updated.'); }
 
-  return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-8">Content Calendar</h1>
+  return <main className="min-h-screen bg-slate-50 px-5 py-8 text-slate-900 sm:px-8"><div className="mx-auto max-w-7xl">
+    <header className="mb-8 flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">Marketing</p><h1 className="mt-1 text-3xl font-bold tracking-tight">Content studio</h1><p className="mt-2 text-sm text-slate-500">Turn real work into reviewed, scheduled posts—and learn from what lands.</p></div><button className="button-primary" type="button" onClick={() => openPost()}>+ Manual draft</button></header>
+    {notice && <div className="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</div>}{error && <div className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
+    <section className="grid gap-6 lg:grid-cols-2"><div className="rounded-2xl border border-indigo-100 bg-indigo-950 p-5 text-white"><h2 className="font-bold">Generate a grounded draft</h2><p className="mt-1 text-sm text-indigo-200">Use a backlog idea or paste repo work, a case study, or a topic.</p><div className="mt-4 grid gap-3 sm:grid-cols-[140px_1fr]"><select className="input" value={generationPlatform} onChange={(e) => setGenerationPlatform(e.target.value)}><option>LinkedIn</option><option>X</option></select><select className="input" value={generationIdea} onChange={(e) => setGenerationIdea(e.target.value)}><option value="">No backlog idea selected</option>{ideas.filter((idea) => idea.status === 'idea').map((idea) => <option key={idea.id} value={idea.id}>{idea.title}</option>)}</select></div><textarea className="input mt-3 min-h-28 resize-y" placeholder="What did you build or learn? Include concrete facts…" value={generationPrompt} onChange={(e) => setGenerationPrompt(e.target.value)}/><button className="mt-3 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-indigo-900 disabled:opacity-60" disabled={busy === '/api/content/generate'} onClick={() => void generate()}>{busy === '/api/content/generate' ? 'Drafting…' : 'Generate for review'}</button></div>
+      <form className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" onSubmit={addIdea}><h2 className="font-bold">Ideas backlog</h2><div className="mt-3 grid gap-3 sm:grid-cols-2"><input className="input" required maxLength={255} placeholder="Idea title" value={ideaTitle} onChange={(e) => setIdeaTitle(e.target.value)}/><select className="input" value={ideaSource} onChange={(e) => setIdeaSource(e.target.value)}><option>Build in public</option><option>Case study</option><option>Technical write-up</option><option>Client question</option></select></div><textarea className="input mt-3 min-h-20 resize-y" placeholder="Angle or supporting notes" value={ideaAngle} onChange={(e) => setIdeaAngle(e.target.value)}/><button className="button-secondary mt-3" type="submit">Add idea</button><div className="mt-4 max-h-40 space-y-2 overflow-y-auto">{ideas.filter((idea) => idea.status !== 'archived').map((idea) => <div key={idea.id} className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 p-3 text-sm"><div><strong>{idea.title}</strong><p className="text-xs text-slate-500">{idea.source} · {idea.status}</p></div><button type="button" className="text-xs font-semibold text-slate-500" onClick={() => void request(`/api/content/ideas/${idea.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'archived' }) }, 'Idea archived.')}>Archive</button></div>)}</div></form></section>
 
-      <div className="mb-4">
-        {/* TODO: View toggle (list/calendar), filter by status/platform */}
-      </div>
-
-      {/* TODO: Content calendar/list with filters for draft/scheduled/posted */}
-      {/* TODO: Post preview, scheduling modal, performance metrics */}
-
-      {posts.length === 0 ? (
-        <p className="text-gray-500">No content yet. Start drafting!</p>
-      ) : (
-        <div>{/* Content list goes here */}</div>
-      )}
-    </div>
-  );
+    <section className="mt-8"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div className="flex gap-2"><button className={view === 'list' ? 'button-primary' : 'button-secondary'} onClick={() => setView('list')}>List</button><button className={view === 'calendar' ? 'button-primary' : 'button-secondary'} onClick={() => setView('calendar')}>Calendar</button></div><select className="input w-auto" value={filter} onChange={(e) => setFilter(e.target.value)}><option value="all">All content</option><option value="LinkedIn">LinkedIn</option><option value="X">X</option><option value="Blog">Blog</option><option value="draft">Drafts</option><option value="scheduled">Scheduled</option><option value="posted">Posted</option></select></div>
+      {loading ? <p className="py-20 text-center text-slate-500">Loading content…</p> : view === 'calendar' ? <Calendar posts={visiblePosts} onOpen={openPost}/> : <div className="space-y-4">{visiblePosts.map((post) => <article key={post.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div className="flex gap-2"><span className="badge bg-indigo-50 text-indigo-700">{post.platform}</span><span className={`badge ${post.reviewStatus === 'approved' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>{post.reviewStatus.replace('_', ' ')}</span><span className="badge bg-slate-100 text-slate-600">{post.status}</span></div><button className="text-sm font-semibold text-indigo-600" onClick={() => openPost(post)}>Review / edit</button></div><p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-slate-700">{post.draftText}</p>{post.scheduledAt && <p className="mt-3 text-xs font-medium text-violet-600">Scheduled {new Date(post.scheduledAt).toLocaleString()}</p>}{post.platformUrl && <a className="mt-3 inline-block text-sm font-semibold text-indigo-600" href={post.platformUrl} target="_blank" rel="noopener noreferrer">View published post ↗</a>}<div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4"><p className="text-sm text-slate-500">{post.likes ?? 0} likes · {post.comments ?? 0} comments · {post.reposts ?? 0} reposts · {post.clicks ?? 0} clicks</p><div className="flex gap-2">{post.status === 'posted' && <button className="button-secondary" onClick={() => void metrics(post)}>Refresh metrics</button>}{post.reviewStatus === 'approved' && post.status !== 'posted' && <button className="button-primary" onClick={() => { if (window.confirm('Publish this approved post now?')) void request(`/api/content/${post.id}/publish`, { method: 'POST' }, 'Post published.'); }}>Publish now</button>}</div></div></article>)}{!visiblePosts.length && <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-16 text-center text-slate-500">No content matches this filter.</div>}</div>}
+    </section>
+  </div>{(editor || creating) && <Editor form={form} setForm={setForm} saving={busy.includes('/api/content')} onClose={() => { setEditor(null); setCreating(false); }} onSubmit={save} onDelete={editor ? async () => { if (window.confirm('Delete this content item?')) { await request(`/api/content/${editor.id}`, { method: 'DELETE' }, 'Content deleted.'); setEditor(null); } } : undefined}/>}</main>;
 }
+
+function Calendar({ posts, onOpen }: { posts: ClientPost[]; onOpen: (post: ClientPost) => void }) { const groups = new Map<string, ClientPost[]>(); for (const post of posts) { const date = post.scheduledAt ?? post.postedAt ?? post.createdAt; const key = new Date(date).toLocaleDateString(); groups.set(key, [...(groups.get(key) ?? []), post]); } return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{[...groups.entries()].map(([date, items]) => <section key={date} className="rounded-2xl border border-slate-200 bg-white p-4"><h3 className="font-bold">{date}</h3><div className="mt-3 space-y-2">{items.map((post) => <button key={post.id} className="w-full rounded-lg bg-slate-50 p-3 text-left text-sm hover:bg-indigo-50" onClick={() => onOpen(post)}><strong>{post.platform}</strong><span className="ml-2 text-xs text-slate-500">{post.status}</span><p className="mt-1 line-clamp-2 text-slate-600">{post.draftText}</p></button>)}</div></section>)}</div>; }
+
+function Editor({ form, setForm, saving, onClose, onSubmit, onDelete }: { form: typeof blank; setForm: (value: typeof blank) => void; saving: boolean; onClose: () => void; onSubmit: (event: FormEvent) => void; onDelete?: () => Promise<void> }) { return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4"><section role="dialog" aria-modal="true" className="max-h-[94vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"><h2 className="text-xl font-bold">Review content</h2><form className="mt-5 grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}><label className="text-sm font-medium">Platform<select className="input mt-1" value={form.platform} onChange={(e) => setForm({ ...form, platform: e.target.value })}><option>LinkedIn</option><option>X</option><option>Blog</option></select></label><label className="text-sm font-medium">Review decision<select className="input mt-1" value={form.reviewStatus} onChange={(e) => setForm({ ...form, reviewStatus: e.target.value })}><option value="needs_review">Needs review</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></label><label className="text-sm font-medium sm:col-span-2">Post text<textarea className="input mt-1 min-h-64 resize-y" required maxLength={20000} value={form.draftText} onChange={(e) => setForm({ ...form, draftText: e.target.value })}/></label><label className="text-sm font-medium">Related repo<input className="input mt-1" value={form.relatedRepo} onChange={(e) => setForm({ ...form, relatedRepo: e.target.value })}/></label><label className="text-sm font-medium">Case study<input className="input mt-1" value={form.relatedCaseStudy} onChange={(e) => setForm({ ...form, relatedCaseStudy: e.target.value })}/></label><label className="text-sm font-medium sm:col-span-2">Schedule (approved content only)<input className="input mt-1" type="datetime-local" value={form.scheduledAt} onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}/></label><div className="flex justify-between sm:col-span-2">{onDelete ? <button type="button" className="text-sm font-semibold text-rose-600" onClick={() => void onDelete()}>Delete</button> : <span/>}<div className="flex gap-2"><button type="button" className="button-secondary" onClick={onClose}>Cancel</button><button type="submit" className="button-primary" disabled={saving}>{saving ? 'Saving…' : 'Save'}</button></div></div></form></section></div>; }
