@@ -1,0 +1,66 @@
+import { leadSources, leadStatuses, type Lead } from '@/lib/db/schema';
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const hasOwn = (value: object, key: string) => Object.prototype.hasOwnProperty.call(value, key);
+
+export type LeadInput = {
+  company?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  status?: (typeof leadStatuses)[number];
+  source?: (typeof leadSources)[number];
+  priority?: number | null;
+  notes?: string;
+  followUpDate?: Date | null;
+  confirmDuplicate?: boolean;
+};
+
+export function normalizeOptionalText(value: string | undefined) {
+  return value?.trim() || null;
+}
+
+export function parseLeadInput(value: unknown, partial: boolean): { ok: true; data: LeadInput } | { ok: false; error: string } {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return { ok: false, error: 'A JSON object is required' };
+  const body = value as Record<string, unknown>;
+  const data: LeadInput = {};
+
+  for (const key of ['company', 'contactName', 'contactEmail', 'contactPhone', 'notes'] as const) {
+    if (hasOwn(body, key)) {
+      if (typeof body[key] !== 'string') return { ok: false, error: `${key} must be text` };
+      data[key] = body[key].trim();
+    }
+  }
+  for (const key of ['company', 'contactName', 'contactEmail'] as const) {
+    if ((!partial || hasOwn(body, key)) && !data[key]) return { ok: false, error: `${key} is required` };
+  }
+  if (data.contactEmail && !emailPattern.test(data.contactEmail)) return { ok: false, error: 'Enter a valid email address' };
+  if (hasOwn(body, 'status')) {
+    if (typeof body.status !== 'string' || !leadStatuses.includes(body.status as never)) return { ok: false, error: 'Invalid lead status' };
+    data.status = body.status as LeadInput['status'];
+  }
+  if (hasOwn(body, 'source')) {
+    if (typeof body.source !== 'string' || !leadSources.includes(body.source as never)) return { ok: false, error: 'Invalid lead source' };
+    data.source = body.source as LeadInput['source'];
+  }
+  if (hasOwn(body, 'priority')) {
+    if (body.priority !== null && (!Number.isInteger(body.priority) || Number(body.priority) < 1 || Number(body.priority) > 5)) return { ok: false, error: 'Priority must be between 1 and 5' };
+    data.priority = body.priority as number | null;
+  }
+  if (hasOwn(body, 'followUpDate')) {
+    if (body.followUpDate === null || body.followUpDate === '') data.followUpDate = null;
+    else if (typeof body.followUpDate === 'string' && !Number.isNaN(Date.parse(body.followUpDate))) data.followUpDate = new Date(body.followUpDate);
+    else return { ok: false, error: 'Invalid follow-up date' };
+  }
+  data.confirmDuplicate = body.confirmDuplicate === true;
+  if (partial && !Object.keys(data).some((key) => key !== 'confirmDuplicate')) return { ok: false, error: 'No supported fields supplied' };
+  return { ok: true, data };
+}
+
+export function leadFlags(lead: Pick<Lead, 'status' | 'followUpDate' | 'lastContactedAt'>) {
+  const now = Date.now();
+  const overdue = !!lead.followUpDate && lead.followUpDate.getTime() < now && !['Won', 'Lost'].includes(lead.status);
+  const staleCutoff = now - 7 * 24 * 60 * 60 * 1000;
+  const stale = lead.status === 'Contacted' && !lead.followUpDate && !!lead.lastContactedAt && lead.lastContactedAt.getTime() < staleCutoff;
+  return { isOverdue: overdue, isStale: stale };
+}

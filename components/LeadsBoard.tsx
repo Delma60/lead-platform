@@ -1,170 +1,89 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type DragEvent } from 'react';
+import { leadStatuses, type Lead } from '@/lib/db/schema';
 
-interface LeadCardProps {
-  lead: {
-    id: number;
-    company: string;
-    contactName: string;
-    contactEmail: string;
-    status: string;
-    priority?: number;
-    followUpDate?: string;
-    isOverdue?: boolean;
-    isStale?: boolean;
-  };
-  onStatusChange: (id: number, newStatus: string) => void;
-}
+export type ClientLead = Omit<Lead, 'createdAt' | 'updatedAt' | 'followUpDate' | 'lastContactedAt' | 'repliedAt'> & {
+  createdAt: string;
+  updatedAt: string;
+  followUpDate: string | null;
+  lastContactedAt: string | null;
+  repliedAt: string | null;
+  isOverdue: boolean;
+  isStale: boolean;
+};
 
-/**
- * LeadCard Component
- * Displays a single lead in card format with status, priority, and follow-up info
- * Used in the kanban board (Phase 2)
- */
-export function LeadCard({ lead, onStatusChange }: LeadCardProps) {
-  const [showActions, setShowActions] = useState(false);
+type Props = {
+  leads: ClientLead[];
+  onEdit: (lead: ClientLead) => void;
+  onStatusChange: (id: number, status: (typeof leadStatuses)[number]) => Promise<void>;
+};
 
-  const statusColors: Record<string, string> = {
-    New: 'bg-gray-100',
-    Contacted: 'bg-blue-100',
-    Replied: 'bg-green-100',
-    Won: 'bg-emerald-100',
-    Lost: 'bg-red-100',
-  };
-
-  const priorityLabels = ['', '⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐'];
-
+function LeadCard({ lead, onEdit, onStatusChange }: { lead: ClientLead } & Pick<Props, 'onEdit' | 'onStatusChange'>) {
   return (
-    <div
-      className={`p-4 rounded-lg border cursor-grab ${statusColors[lead.status] || 'bg-white'}`}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
+    <article
+      draggable
+      onDragStart={(event) => event.dataTransfer.setData('text/lead-id', String(lead.id))}
+      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
     >
-      <div className="mb-2">
-        <h4 className="font-semibold text-sm">{lead.company}</h4>
-        <p className="text-xs text-gray-600">{lead.contactName}</p>
-        <p className="text-xs text-gray-500">{lead.contactEmail}</p>
+      <button className="w-full text-left" type="button" onClick={() => onEdit(lead)}>
+        <span className="block font-semibold text-slate-900">{lead.company}</span>
+        <span className="mt-1 block text-sm text-slate-600">{lead.contactName}</span>
+        <span className="block truncate text-xs text-slate-500">{lead.contactEmail}</span>
+      </button>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {lead.priority && <span className="badge bg-indigo-50 text-indigo-700">Priority {lead.priority}</span>}
+        {lead.isDuplicate && <span className="badge bg-amber-50 text-amber-800">Possible duplicate</span>}
+        {lead.isOverdue && <span className="badge bg-rose-50 text-rose-700">Overdue</span>}
+        {lead.isStale && <span className="badge bg-orange-50 text-orange-700">Stale 7+ days</span>}
       </div>
-
-      {lead.priority && (
-        <div className="text-sm mb-2">{priorityLabels[lead.priority] || ''}</div>
-      )}
-
-      {lead.isOverdue && (
-        <div className="text-xs bg-red-200 text-red-800 px-2 py-1 rounded mb-2">
-          ⚠️ Overdue follow-up
-        </div>
-      )}
-
-      {lead.isStale && (
-        <div className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded mb-2">
-          🕐 Stale (no recent activity)
-        </div>
-      )}
-
-      {lead.followUpDate && (
-        <p className="text-xs text-gray-500 mb-2">
-          Follow-up: {new Date(lead.followUpDate).toLocaleDateString()}
-        </p>
-      )}
-
-      {showActions && (
-        <div className="flex gap-2 mt-2">
-          <button
-            onClick={() => onStatusChange(lead.id, 'Contacted')}
-            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-          >
-            Contact
-          </button>
-          <button
-            onClick={() => onStatusChange(lead.id, 'Won')}
-            className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
-          >
-            Won
-          </button>
-        </div>
-      )}
-    </div>
+      {lead.followUpDate && <p className="mt-3 text-xs text-slate-500">Follow up {new Date(lead.followUpDate).toLocaleDateString()}</p>}
+      <label className="mt-3 block text-xs font-medium text-slate-500">
+        Move to
+        <select
+          className="input mt-1 py-1.5 text-xs"
+          value={lead.status}
+          onChange={(event) => void onStatusChange(lead.id, event.target.value as (typeof leadStatuses)[number])}
+        >
+          {leadStatuses.map((status) => <option key={status}>{status}</option>)}
+        </select>
+      </label>
+    </article>
   );
 }
 
-/**
- * KanbanColumn Component
- * Displays a column in the lead board (one status)
- */
-interface KanbanColumnProps {
-  status: string;
-  leads: any[];
-  onStatusChange: (id: number, newStatus: string) => void;
-  isLoading?: boolean;
-}
-
-export function KanbanColumn({ status, leads, onStatusChange, isLoading }: KanbanColumnProps) {
-  const [isDragOver, setIsDragOver] = useState(false);
+export function LeadsBoard(props: Props) {
+  const [dragOver, setDragOver] = useState<string | null>(null);
+  async function drop(event: DragEvent, status: (typeof leadStatuses)[number]) {
+    event.preventDefault();
+    setDragOver(null);
+    const id = Number(event.dataTransfer.getData('text/lead-id'));
+    if (Number.isInteger(id)) await props.onStatusChange(id, status);
+  }
 
   return (
-    <div
-      className={`flex-1 bg-gray-50 rounded-lg p-4 min-h-96 ${isDragOver ? 'bg-blue-50 border-2 border-blue-400' : 'border border-gray-200'}`}
-      onDragOver={(e) => {
-        e.preventDefault();
-        setIsDragOver(true);
-      }}
-      onDragLeave={() => setIsDragOver(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        // Handle drop - update lead status
-      }}
-    >
-      <div className="mb-4">
-        <h3 className="font-semibold text-lg">{status}</h3>
-        <p className="text-sm text-gray-600">{leads.length} lead{leads.length !== 1 ? 's' : ''}</p>
-      </div>
-
-      {isLoading ? (
-        <div className="text-gray-500 text-center py-8">Loading...</div>
-      ) : leads.length === 0 ? (
-        <div className="text-gray-400 text-center py-8">No leads</div>
-      ) : (
-        <div className="space-y-3">
-          {leads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} onStatusChange={onStatusChange} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * LeadsBoard Component
- * Main kanban board view with columns for each status
- */
-export function LeadsBoard({ leads, onStatusChange, isLoading }: {
-  leads: any[];
-  onStatusChange: (id: number, newStatus: string) => void;
-  isLoading?: boolean;
-}) {
-  const statuses = ['New', 'Contacted', 'Replied', 'Won', 'Lost'];
-  const leadsByStatus = Object.fromEntries(
-    statuses.map((status) => [
-      status,
-      leads.filter((l) => l.status === status),
-    ])
-  );
-
-  return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {statuses.map((status) => (
-        <KanbanColumn
-          key={status}
-          status={status}
-          leads={leadsByStatus[status]}
-          onStatusChange={onStatusChange}
-          isLoading={isLoading}
-        />
-      ))}
+    <div className="grid min-w-[1100px] grid-cols-5 gap-4">
+      {leadStatuses.map((status) => {
+        const items = props.leads.filter((lead) => lead.status === status);
+        return (
+          <section
+            key={status}
+            onDragOver={(event) => { event.preventDefault(); setDragOver(status); }}
+            onDragLeave={() => setDragOver(null)}
+            onDrop={(event) => void drop(event, status)}
+            className={`min-h-80 rounded-2xl border p-3 transition ${dragOver === status ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-slate-100/70'}`}
+          >
+            <header className="mb-3 flex items-center justify-between px-1">
+              <h2 className="font-semibold text-slate-800">{status}</h2>
+              <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-slate-500">{items.length}</span>
+            </header>
+            <div className="space-y-3">
+              {items.map((lead) => <LeadCard key={lead.id} lead={lead} onEdit={props.onEdit} onStatusChange={props.onStatusChange} />)}
+              {!items.length && <p className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-xs text-slate-400">Drop a lead here</p>}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

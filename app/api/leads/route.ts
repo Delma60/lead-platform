@@ -1,64 +1,67 @@
+import { and, asc, eq, or, sql } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { leads } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { leads, leadSources, leadStatuses } from '@/lib/db/schema';
+import { leadFlags, normalizeOptionalText, parseLeadInput } from '@/lib/leads';
 
-/**
- * GET /api/leads
- * Fetch all leads or filter by status
- */
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const status = searchParams.get('status');
-
-    let query = db.select().from(leads);
-
-    if (status) {
-      query = query.where(eq(leads.status, status as any));
+    const status = request.nextUrl.searchParams.get('status');
+    if (status && !leadStatuses.includes(status as (typeof leadStatuses)[number])) {
+      return NextResponse.json({ error: 'Invalid lead status' }, { status: 400 });
     }
 
-    const allLeads = await query;
-    return NextResponse.json(allLeads);
+    const rows = status
+      ? await db.select().from(leads).where(eq(leads.status, status as (typeof leadStatuses)[number])).orderBy(asc(leads.createdAt))
+      : await db.select().from(leads).orderBy(asc(leads.createdAt));
+
+    return NextResponse.json(rows.map((lead) => ({ ...lead, ...leadFlags(lead) })));
   } catch (error) {
     console.error('GET /api/leads error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch leads' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch leads' }, { status: 500 });
   }
 }
 
-/**
- * POST /api/leads
- * Create a new lead
- * Body: { company, contactName, contactEmail, contactPhone?, source? }
- */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const parsed = parseLeadInput(await request.json(), false);
+    if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
-    // TODO: Implement duplicate detection here
-    // Check if company/contact already exists
+    const company = parsed.data.company!;
+    const contactEmail = parsed.data.contactEmail!;
+    const contactName = parsed.data.contactName!;
+    const duplicates = await db.select().from(leads).where(
+      or(
+        sql`lower(${leads.contactEmail}) = lower(${contactEmail})`,
+        and(
+          sql`lower(${leads.company}) = lower(${company})`,
+          sql`lower(${leads.contactName}) = lower(${contactName})`,
+        ),
+      ),
+    ).limit(5);
 
-    const result = await db
-      .insert(leads)
-      .values({
-        company: body.company,
-        contactName: body.contactName,
-        contactEmail: body.contactEmail,
-        contactPhone: body.contactPhone,
-        source: body.source || 'Other',
-        status: 'New',
-      })
-      .returning();
+    if (duplicates.length && !parsed.data.confirmDuplicate) {
+      return NextResponse.json(
+        { error: 'Possible duplicate lead', code: 'DUPLICATE_LEAD', duplicates },
+        { status: 409 },
+      );
+    }
 
-    return NextResponse.json(result[0], { status: 201 });
+    const [created] = await db.insert(leads).values({
+      company,
+      contactName,
+      contactEmail,
+      contactPhone: normalizeOptionalText(parsed.data.contactPhone),
+      source: parsed.data.source ?? leadSources.at(-1),
+      priority: parsed.data.priority ?? null,
+      notes: normalizeOptionalText(parsed.data.notes),
+      followUpDate: parsed.data.followUpDate ?? null,
+      isDuplicate: duplicates.length > 0,
+    }).returning();
+
+    return NextResponse.json({ ...created, ...leadFlags(created) }, { status: 201 });
   } catch (error) {
     console.error('POST /api/leads error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create lead' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create lead' }, { status: 500 });
   }
 }

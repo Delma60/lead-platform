@@ -1,4 +1,7 @@
-import { pgTable, text, serial, varchar, timestamp, integer, boolean, decimal } from 'drizzle-orm/pg-core';
+import { pgTable, text, serial, varchar, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
+
+export const leadStatuses = ['New', 'Contacted', 'Replied', 'Won', 'Lost'] as const;
+export const leadSources = ['Upwork', 'Wellfound', 'Cold', 'Referral', 'RemoteOK', 'GitHub', 'Other'] as const;
 
 /**
  * Leads table: Core lead pipeline data
@@ -10,12 +13,12 @@ export const leads = pgTable('leads', {
   contactEmail: varchar('contact_email', { length: 255 }).notNull(),
   contactPhone: varchar('contact_phone', { length: 20 }),
   status: varchar('status', {
-    enum: ['New', 'Contacted', 'Replied', 'Won', 'Lost'],
+    enum: leadStatuses,
     length: 20,
   }).default('New').notNull(),
   priority: integer('priority'), // 1-5 scale: fit (1-3) + urgency (1-3)
   source: varchar('source', {
-    enum: ['Upwork', 'Wellfound', 'Cold', 'Referral', 'RemoteOK', 'GitHub', 'Other'],
+    enum: leadSources,
     length: 50,
   }),
   notes: text('notes'),
