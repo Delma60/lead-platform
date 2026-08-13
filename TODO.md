@@ -40,8 +40,8 @@
 - [x] "This week" snapshot on dashboard load (leads added / emails sent / replies)
 
 ## Phase 5: Won-lead follow-through
-- [ ] Rate/scope notes per lead (what was quoted, project size)
-- [ ] Contract/deposit status flags once "Won" (contract signed, deposit paid)
+- [x] Rate/scope notes per lead (what was quoted, project size)
+- [x] Contract/deposit status flags once "Won" (contract signed, deposit paid)
 
 ## Phase 6: AI-assisted outreach (human-approved, not autonomous send)
 - [ ] AI research step: given a lead's company/URL, summarize what they do + likely pain points (uses web search)

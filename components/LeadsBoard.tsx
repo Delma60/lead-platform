@@ -36,6 +36,8 @@ function LeadCard({ lead, onEdit, onStatusChange }: { lead: ClientLead } & Pick<
         {lead.isDuplicate && <span className="badge bg-amber-50 text-amber-800">Possible duplicate</span>}
         {lead.isOverdue && <span className="badge bg-rose-50 text-rose-700">Overdue</span>}
         {lead.isStale && <span className="badge bg-orange-50 text-orange-700">Stale 7+ days</span>}
+        {lead.contractSigned && <span className="badge bg-emerald-50 text-emerald-700">Contract signed</span>}
+        {lead.depositPaid && <span className="badge bg-teal-50 text-teal-700">Deposit paid</span>}
       </div>
       {lead.followUpDate && <p className="mt-3 text-xs text-slate-500">Follow up {new Date(lead.followUpDate).toLocaleDateString()}</p>}
       {lead.replyTimeInDays !== null && <p className="mt-2 text-xs font-medium text-violet-600">Replied in {lead.replyTimeInDays} day{lead.replyTimeInDays === 1 ? '' : 's'}</p>}
