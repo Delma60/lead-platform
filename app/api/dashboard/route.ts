@@ -6,7 +6,7 @@ import { leadFlags } from '@/lib/leads';
 
 export async function GET() {
   try {
-    const [leadRows, logRows, templateRows, contentRows] = await Promise.all([
+    const [leadRows, logRows, templateRows, contentRows] = await db.batch([
       db.select().from(leads).orderBy(asc(leads.createdAt)),
       db.select().from(sendLog).orderBy(asc(sendLog.sentAt)),
       db.select().from(templates).orderBy(asc(templates.name)),
