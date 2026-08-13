@@ -26,7 +26,11 @@ export default function LeadsPage() {
     } catch (value) { setError(value instanceof Error ? value.message : 'Could not load leads'); }
     finally { setLoading(false); }
   }, []);
-  useEffect(() => { void loadLeads(); }, [loadLeads]);
+  useEffect(() => {
+    // Initial client fetch; subsequent mutations call the same refresh function.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadLeads();
+  }, [loadLeads]);
 
   function openNew() { setEditing(null); setForm(emptyForm); setError(''); setDuplicateWarning(false); setModalOpen(true); }
   function openEdit(lead: ClientLead) {

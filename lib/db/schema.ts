@@ -2,6 +2,7 @@ import { pgTable, text, serial, varchar, timestamp, integer, boolean } from 'dri
 
 export const leadStatuses = ['New', 'Contacted', 'Replied', 'Won', 'Lost'] as const;
 export const leadSources = ['Upwork', 'Wellfound', 'Cold', 'Referral', 'RemoteOK', 'GitHub', 'Other'] as const;
+export const templateVariants = ['SDK story', 'wallet story', 'lending story', 'general'] as const;
 
 /**
  * Leads table: Core lead pipeline data
@@ -46,7 +47,7 @@ export const templates = pgTable('templates', {
   subject: varchar('subject', { length: 500 }).notNull(),
   body: text('body').notNull(),
   variant: varchar('variant', {
-    enum: ['SDK story', 'wallet story', 'lending story', 'general'],
+    enum: templateVariants,
     length: 50,
   }).default('general'),
   isFollowUp: boolean('is_follow_up').default(false),

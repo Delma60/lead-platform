@@ -1,24 +1,24 @@
 # Lead Pipeline App — TODO
 
 ## Phase 1: Foundation
-- [ ] Scaffold Next.js (App Router) + TypeScript project
-- [ ] Install and configure shadcn/ui
+- [x] Scaffold Next.js (App Router) + TypeScript project
+- [x] Install and configure shadcn/ui
 - [ ] Set up Neon (Postgres) database
-- [ ] Set up Drizzle ORM + schema (`lib/db/schema.ts`) — leads, templates, send_log, content tables
+- [x] Set up Drizzle ORM + schema (`lib/db/schema.ts`) — leads, templates, send_log, content tables
 - [ ] Run initial migration
 - [ ] Set up Gmail App Password for SMTP
-- [ ] Install Nodemailer, configure transport (`lib/mailer.ts`)
+- [x] Install Nodemailer, configure transport (`lib/mailer.ts`)
 
 ## Phase 2: Core CRUD
-- [ ] `/api/leads` — GET (list), POST (create)
-- [ ] `/api/leads/[id]` — PATCH (update status/notes), DELETE
-- [ ] Leads board page (`/app/leads`) — columns: New, Contacted, Replied, Won, Lost
-- [ ] Add/Edit lead modal (shadcn Dialog + Form)
-- [ ] Status change (dropdown or drag-and-drop)
-- [ ] Follow-up date field + overdue highlighting
-- [ ] Lead scoring/priority field (1-5: fit + urgency)
-- [ ] Duplicate detection on add (warn if company/contact already exists)
-- [ ] Stale lead flag — "Contacted" + no reply after X days + no follow-up scheduled (separate from overdue)
+- [x] `/api/leads` — GET (list), POST (create)
+- [x] `/api/leads/[id]` — PATCH (update status/notes), DELETE
+- [x] Leads board page (`/app/leads`) — columns: New, Contacted, Replied, Won, Lost
+- [x] Add/Edit lead modal (accessible dialog + form controls)
+- [x] Status change (dropdown or drag-and-drop)
+- [x] Follow-up date field + overdue highlighting
+- [x] Lead scoring/priority field (1-5: fit + urgency)
+- [x] Duplicate detection on add (warn if company/contact already exists)
+- [x] Stale lead flag — "Contacted" + no reply after 7 days + no follow-up scheduled (separate from overdue)
 
 ## Phase 3: Email templates
 - [ ] `templates` table (name, subject, body, variant tag e.g. "SDK story"/"wallet story"/"lending story")
