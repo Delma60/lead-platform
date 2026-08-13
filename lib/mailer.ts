@@ -1,17 +1,19 @@
 import nodemailer from 'nodemailer';
+import { getSettings } from '@/lib/settings';
 
 /**
  * Nodemailer transport for sending emails via Gmail SMTP
  * Uses App Password (not regular Gmail password)
  * Limit: ~500 emails/day for standard Gmail accounts
  */
-function createTransporter() {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    throw new Error('Gmail SMTP is not configured');
+async function createTransporter() {
+  const settings = await getSettings(['gmailUser', 'gmailAppPassword']);
+  if (!settings.gmailUser || !settings.gmailAppPassword) {
+    throw new Error('Gmail SMTP is not configured in Settings');
   }
   return nodemailer.createTransport({
     service: 'gmail',
-    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+    auth: { user: settings.gmailUser, pass: settings.gmailAppPassword },
   });
 }
 
@@ -29,8 +31,9 @@ export async function sendEmail(
   text?: string
 ) {
   try {
-    const info = await createTransporter().sendMail({
-      from: process.env.GMAIL_USER,
+    const settings = await getSettings(['gmailUser']);
+    const info = await (await createTransporter()).sendMail({
+      from: settings.gmailUser,
       to,
       subject,
       html,

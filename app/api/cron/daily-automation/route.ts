@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { aiReviews, content, leads } from '@/lib/db/schema';
 import { leadFlags } from '@/lib/leads';
 import { sendEmail, textToHtml } from '@/lib/mailer';
+import { getSettings } from '@/lib/settings';
 
 export async function GET(request: NextRequest) {
   const unauthorized = rejectUnauthorizedCron(request);
@@ -27,7 +28,8 @@ export async function GET(request: NextRequest) {
     const overdue = flagged.filter(({ flags }) => flags.isOverdue).map(({ lead }) => lead);
     const stale = flagged.filter(({ flags }) => flags.isStale).map(({ lead }) => lead);
     const body = [`Lead Platform digest — ${now.toLocaleDateString()}`, '', `${overdue.length} overdue follow-up(s)`, ...overdue.slice(0, 20).map((lead) => `- ${lead.company}: ${lead.followUpDate?.toLocaleDateString()}`), '', `${stale.length} stale contacted lead(s)`, ...stale.slice(0, 20).map((lead) => `- ${lead.company}`), '', `${pendingReplies.length} repl${pendingReplies.length === 1 ? 'y' : 'ies'} pending human review`, `${contentDue.length} content item(s) due for review`].join('\n');
-    const recipient = process.env.DIGEST_EMAIL ?? process.env.GMAIL_USER;
+    const settings = await getSettings(['digestEmail', 'gmailUser']);
+    const recipient = settings.digestEmail || settings.gmailUser;
     let digestSent = false;
     if (recipient) { await sendEmail(recipient, `Lead Platform daily digest — ${overdue.length + stale.length + pendingReplies.length} action(s)`, textToHtml(body), body); digestSent = true; }
     return NextResponse.json({ flagsUpdated, overdue: overdue.length, stale: stale.length, pendingReplies: pendingReplies.length, contentDue: contentDue.length, digestSent });

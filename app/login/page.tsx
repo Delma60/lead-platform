@@ -1,0 +1,8 @@
+'use client';
+import { useState, type FormEvent } from 'react';
+
+export default function LoginPage() {
+  const [password, setPassword] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
+  async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(''); const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) }); const body = await response.json(); if (!response.ok) setError(body.error ?? 'Could not sign in'); else { const next = new URLSearchParams(window.location.search).get('next'); window.location.assign(next?.startsWith('/') && !next.startsWith('//') ? next : '/dashboard'); } setBusy(false); }
+  return <main className="grid min-h-screen place-items-center bg-slate-950 p-5"><section className="w-full max-w-md rounded-2xl bg-white p-7 shadow-2xl"><p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">Lead Platform</p><h1 className="mt-2 text-2xl font-bold text-slate-900">Admin sign in</h1><p className="mt-2 text-sm text-slate-500">Enter the private workspace password.</p><form className="mt-6" onSubmit={submit}><label className="text-sm font-medium text-slate-700">Password<input className="input mt-1" type="password" autoComplete="current-password" required autoFocus value={password} onChange={(event) => setPassword(event.target.value)}/></label>{error && <p role="alert" className="mt-3 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}<button className="button-primary mt-4 w-full" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button></form></section></main>;
+}

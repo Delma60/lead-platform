@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { leads } from '@/lib/db/schema';
+import { getSettings } from '@/lib/settings';
 
 const terms = ['fintech', 'payment', 'payments', 'wallet', 'banking', 'lending', 'loan', 'credit', 'blockchain'];
 const matches = (value: string) => terms.some((term) => value.toLowerCase().includes(term));
@@ -8,12 +9,13 @@ const clean = (value: unknown) => String(value ?? '').replace(/<[^>]*>/g, ' ').r
 
 export async function GET() {
   try {
+    const settings = await getSettings(['githubToken', 'remoteokApiUrl']);
     const headers: HeadersInit = { 'User-Agent': 'lead-platform/1.0' };
-    if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+    if (settings.githubToken) headers.Authorization = `Bearer ${settings.githubToken}`;
     const githubQuery = encodeURIComponent('(fintech OR payments OR wallet OR banking OR lending) label:"help wanted" state:open');
     const repositoryQuery = encodeURIComponent('fintech OR payments OR wallet OR banking OR lending archived:false');
     const [remoteResult, githubResult, repositoryResult, existing] = await Promise.allSettled([
-      fetch(process.env.REMOTEOK_API_URL ?? 'https://remoteok.com/api', { headers: { 'User-Agent': 'lead-platform/1.0' }, next: { revalidate: 900 } }).then((response) => response.ok ? response.json() : Promise.reject(new Error(`RemoteOK ${response.status}`))),
+      fetch(settings.remoteokApiUrl || 'https://remoteok.com/api', { headers: { 'User-Agent': 'lead-platform/1.0' }, next: { revalidate: 900 } }).then((response) => response.ok ? response.json() : Promise.reject(new Error(`RemoteOK ${response.status}`))),
       fetch(`https://api.github.com/search/issues?q=${githubQuery}&sort=updated&per_page=30`, { headers, next: { revalidate: 900 } }).then((response) => response.ok ? response.json() : Promise.reject(new Error(`GitHub ${response.status}`))),
       fetch(`https://api.github.com/search/repositories?q=${repositoryQuery}&sort=updated&per_page=20`, { headers, next: { revalidate: 900 } }).then((response) => response.ok ? response.json() : Promise.reject(new Error(`GitHub repositories ${response.status}`))),
       db.select({ company: leads.company, notes: leads.notes }).from(leads),

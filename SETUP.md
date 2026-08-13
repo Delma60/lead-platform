@@ -18,6 +18,8 @@ Edit `.env.local` with:
 - `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_AUTHOR_URN`, `LINKEDIN_API_VERSION`: LinkedIn registered-app publishing credentials
 - `X_ACCESS_TOKEN`: X OAuth 2.0 user access token with post read/write scopes
 - `CRON_SECRET`: Random 16+ character secret used to authenticate every cron endpoint
+- `ADMIN_PASSWORD`: Private workspace password
+- `AUTH_SECRET`: Random signing secret (generate at least 32 random bytes)
 - `GMAIL_OAUTH_CLIENT_ID`, `GMAIL_OAUTH_CLIENT_SECRET`, `GMAIL_OAUTH_REFRESH_TOKEN`: Google OAuth credentials with the `gmail.readonly` scope for reply sync
 - `DIGEST_EMAIL`: Optional digest recipient; defaults to `GMAIL_USER`
 

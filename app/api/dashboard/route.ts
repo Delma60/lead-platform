@@ -1,15 +1,16 @@
 import { asc } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { leads, sendLog, templates } from '@/lib/db/schema';
+import { content, leads, sendLog, templates } from '@/lib/db/schema';
 import { leadFlags } from '@/lib/leads';
 
 export async function GET() {
   try {
-    const [leadRows, logRows, templateRows] = await Promise.all([
+    const [leadRows, logRows, templateRows, contentRows] = await Promise.all([
       db.select().from(leads).orderBy(asc(leads.createdAt)),
       db.select().from(sendLog).orderBy(asc(sendLog.sentAt)),
       db.select().from(templates).orderBy(asc(templates.name)),
+      db.select().from(content).orderBy(asc(content.createdAt)),
     ]);
     const now = new Date();
     const weekStart = new Date(now);
@@ -51,8 +52,14 @@ export async function GET() {
       averageReplyDays: Math.round(averageReplyDays * 10) / 10,
       winRate: reached.Replied ? Math.round((reached.Won / reached.Replied) * 100) : 0,
     };
+    const postedContent = contentRows.filter((post) => post.status === 'posted');
+    const contentPerformance = (['LinkedIn', 'X', 'Blog'] as const).map((platform) => {
+      const posts = postedContent.filter((post) => post.platform === platform);
+      return { platform, posts: posts.length, likes: posts.reduce((sum, post) => sum + (post.likes ?? 0), 0), comments: posts.reduce((sum, post) => sum + (post.comments ?? 0), 0), reposts: posts.reduce((sum, post) => sum + (post.reposts ?? 0), 0), clicks: posts.reduce((sum, post) => sum + post.clicks, 0) };
+    });
+    const contentPipeline = { needsReview: contentRows.filter((post) => post.reviewStatus === 'needs_review').length, scheduled: contentRows.filter((post) => post.status === 'scheduled').length, posted: postedContent.length };
     return NextResponse.json({
-      generatedAt: now.toISOString(), weekStart: weekStart.toISOString(), snapshot, funnel, sourceBreakdown, templatePerformance: performance,
+      generatedAt: now.toISOString(), weekStart: weekStart.toISOString(), snapshot, funnel, sourceBreakdown, templatePerformance: performance, contentPerformance, contentPipeline,
       digest: { overdue: flagged.filter((lead) => lead.isOverdue).length, stale: flagged.filter((lead) => lead.isStale).length, summary: `${snapshot.leadsAdded} leads added, ${snapshot.emailsSent} emails sent, and ${snapshot.replies} replies this week. ${snapshot.wins} total wins.` },
     });
   } catch (error) {

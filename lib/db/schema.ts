@@ -155,6 +155,12 @@ export const inboundMessages = appSchema.table('inbound_messages', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const appSettings = appSchema.table('app_settings', {
+  key: varchar('key', { length: 100 }).primaryKey(),
+  encryptedValue: text('encrypted_value').notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Export types for use in application
 export type Lead = typeof leads.$inferSelect;
 export type NewLead = typeof leads.$inferInsert;

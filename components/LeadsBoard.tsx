@@ -67,7 +67,7 @@ export function LeadsBoard(props: Props) {
   }
 
   return (
-    <div className="grid min-w-[1100px] grid-cols-5 gap-4">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
       {leadStatuses.map((status) => {
         const items = props.leads.filter((lead) => lead.status === status);
         return (
@@ -76,7 +76,7 @@ export function LeadsBoard(props: Props) {
             onDragOver={(event) => { event.preventDefault(); setDragOver(status); }}
             onDragLeave={() => setDragOver(null)}
             onDrop={(event) => void drop(event, status)}
-            className={`min-h-80 rounded-2xl border p-3 transition ${dragOver === status ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-slate-100/70'}`}
+            className={`min-h-48 rounded-2xl border p-3 transition xl:min-h-80 ${dragOver === status ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-slate-100/70'}`}
           >
             <header className="mb-3 flex items-center justify-between px-1">
               <h2 className="font-semibold text-slate-800">{status}</h2>

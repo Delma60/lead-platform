@@ -84,7 +84,7 @@ export default function LeadsPage() {
           <button type="button" className="button-primary" onClick={openNew}>+ Add lead</button>
         </header>
         {error && !modalOpen && <div className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
-        <div className="overflow-x-auto pb-4">{loading ? <p className="py-20 text-center text-slate-500">Loading leads…</p> : <LeadsBoard leads={leads} onEdit={openEdit} onStatusChange={changeStatus} />}</div>
+        <div className="pb-4">{loading ? <p className="py-20 text-center text-slate-500">Loading leads…</p> : <LeadsBoard leads={leads} onEdit={openEdit} onStatusChange={changeStatus} />}</div>
       </div>
 
       {modalOpen && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalOpen(false); }}>

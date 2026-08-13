@@ -12,12 +12,13 @@ function responseText(response: Record<string, unknown>) {
 }
 
 export async function openAIJson<T>(instructions: string, input: string, format: JsonSchema, webSearch = false): Promise<T> {
-  if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured');
+  const settings = await getSettings(['openaiApiKey', 'openaiModel']);
+  if (!settings.openaiApiKey) throw new Error('OpenAI is not configured in Settings');
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${settings.openaiApiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL ?? 'gpt-5.4-mini',
+      model: settings.openaiModel || 'gpt-5.4-mini',
       instructions,
       input,
       ...(webSearch && { tools: [{ type: 'web_search' }] }),
@@ -31,3 +32,4 @@ export async function openAIJson<T>(instructions: string, input: string, format:
   }
   return JSON.parse(responseText(body)) as T;
 }
+import { getSettings } from '@/lib/settings';

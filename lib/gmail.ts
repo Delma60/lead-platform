@@ -2,20 +2,16 @@ type GmailHeader = { name?: string; value?: string };
 type GmailPart = { mimeType?: string; body?: { data?: string }; parts?: GmailPart[] };
 type GmailMessage = { id: string; threadId: string; internalDate?: string; payload?: GmailPart & { headers?: GmailHeader[] } };
 
-function required(name: string) {
-  const value = process.env[name];
-  if (!value) throw new Error(`${name} is not configured`);
-  return value;
-}
-
 async function accessToken() {
+  const settings = await getSettings(['gmailOauthClientId', 'gmailOauthClientSecret', 'gmailOauthRefreshToken']);
+  if (!settings.gmailOauthClientId || !settings.gmailOauthClientSecret || !settings.gmailOauthRefreshToken) throw new Error('Gmail OAuth is not configured in Settings');
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: required('GMAIL_OAUTH_CLIENT_ID'),
-      client_secret: required('GMAIL_OAUTH_CLIENT_SECRET'),
-      refresh_token: required('GMAIL_OAUTH_REFRESH_TOKEN'),
+      client_id: settings.gmailOauthClientId,
+      client_secret: settings.gmailOauthClientSecret,
+      refresh_token: settings.gmailOauthRefreshToken,
       grant_type: 'refresh_token',
     }),
   });
@@ -69,3 +65,4 @@ export async function listRecentInboxMessages(afterEpochSeconds: number) {
     receivedAt: new Date(Number(message.internalDate ?? Date.now())),
   })).filter((message) => message.senderEmail && message.body);
 }
+import { getSettings } from '@/lib/settings';
