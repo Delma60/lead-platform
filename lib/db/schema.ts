@@ -14,6 +14,7 @@ export const leads = pgTable('leads', {
   contactName: varchar('contact_name', { length: 255 }).notNull(),
   contactEmail: varchar('contact_email', { length: 255 }).notNull(),
   contactPhone: varchar('contact_phone', { length: 20 }),
+  companyUrl: varchar('company_url', { length: 1000 }),
   status: varchar('status', {
     enum: leadStatuses,
     length: 20,
@@ -37,6 +38,8 @@ export const leads = pgTable('leads', {
   repliedAt: timestamp('replied_at'),
   replyTimeInDays: integer('reply_time_in_days'), // calculated: repliedAt - lastContactedAt
   referralSourceLead: integer('referral_source_lead'), // FK to leads.id if referral
+  researchSummary: text('research_summary'),
+  recommendedTemplateId: integer('recommended_template_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -82,6 +85,20 @@ export const sendLog = pgTable('send_log', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const aiReviews = pgTable('ai_reviews', {
+  id: serial('id').primaryKey(),
+  leadId: integer('lead_id').notNull(),
+  templateId: integer('template_id'),
+  kind: varchar('kind', { enum: ['outreach', 'reply_triage'], length: 30 }).notNull(),
+  subject: varchar('subject', { length: 500 }),
+  output: text('output').notNull(),
+  sourceText: text('source_text'),
+  suggestedStatus: varchar('suggested_status', { enum: leadStatuses, length: 20 }),
+  status: varchar('status', { enum: ['needs_review', 'approved', 'rejected'], length: 30 }).default('needs_review').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 /**
  * Content table: Social media & blog post tracking
  */
@@ -115,5 +132,7 @@ export type Template = typeof templates.$inferSelect;
 export type NewTemplate = typeof templates.$inferInsert;
 export type SendLogEntry = typeof sendLog.$inferSelect;
 export type NewSendLogEntry = typeof sendLog.$inferInsert;
+export type AiReview = typeof aiReviews.$inferSelect;
+export type NewAiReview = typeof aiReviews.$inferInsert;
 export type ContentPost = typeof content.$inferSelect;
 export type NewContentPost = typeof content.$inferInsert;

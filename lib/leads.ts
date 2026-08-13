@@ -8,6 +8,7 @@ export type LeadInput = {
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
+  companyUrl?: string;
   status?: (typeof leadStatuses)[number];
   source?: (typeof leadSources)[number];
   priority?: number | null;
@@ -30,7 +31,7 @@ export function parseLeadInput(value: unknown, partial: boolean): { ok: true; da
   const body = value as Record<string, unknown>;
   const data: LeadInput = {};
 
-  for (const key of ['company', 'contactName', 'contactEmail', 'contactPhone', 'notes', 'rateScope'] as const) {
+  for (const key of ['company', 'contactName', 'contactEmail', 'contactPhone', 'companyUrl', 'notes', 'rateScope'] as const) {
     if (hasOwn(body, key)) {
       if (typeof body[key] !== 'string') return { ok: false, error: `${key} must be text` };
       data[key] = body[key].trim();

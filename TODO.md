@@ -3,10 +3,10 @@
 ## Phase 1: Foundation
 - [x] Scaffold Next.js (App Router) + TypeScript project
 - [x] Install and configure shadcn/ui
-- [ ] Set up Neon (Postgres) database
+- [x] Set up Neon (Postgres) database
 - [x] Set up Drizzle ORM + schema (`lib/db/schema.ts`) — leads, templates, send_log, content tables
-- [ ] Run initial migration
-- [ ] Set up Gmail App Password for SMTP
+- [x] Run initial migration
+- [x] Set up Gmail App Password for SMTP
 - [x] Install Nodemailer, configure transport (`lib/mailer.ts`)
 
 ## Phase 2: Core CRUD
