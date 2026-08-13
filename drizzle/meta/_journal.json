@@ -15,6 +15,13 @@
       "when": 1786649275469,
       "tag": "0001_dizzy_killer_shrike",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786655212113,
+      "tag": "0002_illegal_skrulls",
+      "breakpoints": true
     }
   ]
 }
