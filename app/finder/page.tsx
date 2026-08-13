@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-type FinderMatch = { id: string; source: 'RemoteOK' | 'GitHub'; company: string; title: string; summary: string; url: string; contactName: string; duplicate: boolean; attribution: string };
+type FinderMatch = { id: string; externalId?: string; source: 'RemoteOK' | 'GitHub' | 'Facebook'; company: string; title: string; summary: string; url: string; contactName: string; contactEmail?: string; contactPhone?: string; duplicate: boolean; attribution: string };
 
 export default function FinderPage() {
   const [matches, setMatches] = useState<FinderMatch[]>([]);
@@ -47,7 +47,7 @@ export default function FinderPage() {
     {error && <div className="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
     {!!sourceErrors.length && <div className="mb-5 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">Some sources were unavailable: {sourceErrors.join(' · ')}</div>}
     {loading ? <p className="py-24 text-center text-slate-500">Searching RemoteOK and GitHub…</p> : matches.length ? <><div className="grid gap-4 lg:grid-cols-2">{matches.slice(0, visible).map((match) => <article key={match.id} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3"><div><span className={`badge ${match.source === 'RemoteOK' ? 'bg-violet-50 text-violet-700' : 'bg-slate-900 text-white'}`}>{match.source}</span><h2 className="mt-3 text-lg font-bold">{match.company}</h2><p className="mt-1 font-medium text-slate-700">{match.title}</p></div>{match.duplicate && <span className="badge shrink-0 bg-amber-50 text-amber-800">Already imported</span>}</div>
+      <div className="flex items-start justify-between gap-3"><div><span className={`badge ${match.source === 'Facebook' ? 'bg-blue-50 text-blue-700' : match.source === 'RemoteOK' ? 'bg-violet-50 text-violet-700' : 'bg-slate-900 text-white'}`}>{match.source}</span><h2 className="mt-3 text-lg font-bold">{match.company}</h2><p className="mt-1 font-medium text-slate-700">{match.title}</p></div>{match.duplicate && <span className="badge shrink-0 bg-amber-50 text-amber-800">Already imported</span>}</div>
       <p className="mt-3 line-clamp-4 text-sm leading-6 text-slate-600">{match.summary || 'No description was provided.'}</p>
       <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5"><a href={match.url} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800">View listing ↗</a><button className="button-primary" type="button" disabled={match.duplicate || importing === match.id} onClick={() => void importMatch(match)}>{match.duplicate ? 'In pipeline' : importing === match.id ? 'Importing…' : 'Import as lead'}</button></div>
       <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-400">{match.attribution}</p>

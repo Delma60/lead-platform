@@ -3,12 +3,13 @@
 import { useState, type DragEvent } from 'react';
 import { leadStatuses, type Lead } from '@/lib/db/schema';
 
-export type ClientLead = Omit<Lead, 'createdAt' | 'updatedAt' | 'followUpDate' | 'lastContactedAt' | 'repliedAt'> & {
+export type ClientLead = Omit<Lead, 'createdAt' | 'updatedAt' | 'followUpDate' | 'lastContactedAt' | 'repliedAt' | 'whatsappOptInAt'> & {
   createdAt: string;
   updatedAt: string;
   followUpDate: string | null;
   lastContactedAt: string | null;
   repliedAt: string | null;
+  whatsappOptInAt: string | null;
   isOverdue: boolean;
   isStale: boolean;
 };

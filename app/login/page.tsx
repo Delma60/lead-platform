@@ -3,13 +3,43 @@
 import { useState, type FormEvent } from 'react';
 
 export default function LoginPage() {
-  const [password, setPassword] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
-  async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(''); const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) }); const body = await response.json(); if (!response.ok) setError(body.error ?? 'Could not sign in'); else { const next = new URLSearchParams(window.location.search).get('next'); window.location.assign(next?.startsWith('/') && !next.startsWith('//') ? next : '/dashboard'); } setBusy(false); }
-  return <main className="relative grid min-h-screen overflow-hidden bg-[#112321] p-5 sm:p-8">
-    <div aria-hidden="true" className="absolute -left-24 -top-28 size-[30rem] rounded-full bg-teal-400/12 blur-3xl"/><div aria-hidden="true" className="absolute -bottom-40 -right-24 size-[34rem] rounded-full bg-amber-300/8 blur-3xl"/>
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError('');
+    const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
+    const body = await response.json();
+    if (!response.ok) setError(body.error ?? 'Could not sign in');
+    else {
+      const next = new URLSearchParams(window.location.search).get('next');
+      window.location.assign(next?.startsWith('/') && !next.startsWith('//') ? next : '/dashboard');
+    }
+    setBusy(false);
+  }
+
+  return <main className="relative grid min-h-screen overflow-hidden bg-[#f8fafd] p-5 sm:p-8">
+    <div aria-hidden="true" className="absolute -left-24 -top-28 size-[30rem] rounded-full bg-blue-200/30 blur-3xl"/>
+    <div aria-hidden="true" className="absolute -bottom-40 -right-24 size-[34rem] rounded-full bg-yellow-100/40 blur-3xl"/>
     <div className="relative mx-auto grid w-full max-w-5xl items-center gap-12 lg:grid-cols-[1.15fr_.85fr]">
-      <section className="hidden text-white lg:block"><div className="mb-8 grid size-12 place-items-center rounded-2xl bg-teal-400 text-lg font-black text-[#102321] shadow-[0_15px_40px_rgba(45,212,191,.2)]">LP</div><p className="text-sm font-bold uppercase tracking-[.24em] text-teal-300">Private operator console</p><h1 className="mt-5 max-w-xl text-5xl font-bold leading-[1.04] tracking-[-.05em]">Turn focused outreach into a repeatable growth system.</h1><p className="mt-6 max-w-lg text-lg leading-8 text-slate-300">Research leads, review AI-assisted drafts, manage follow-ups, and track what converts—all from one calm workspace.</p><div className="mt-10 flex gap-6 text-sm text-slate-400"><span>Human-approved AI</span><span>•</span><span>Private by default</span><span>•</span><span>Built to ship</span></div></section>
-      <section className="w-full rounded-[1.5rem] border border-white/10 bg-white/96 p-6 shadow-[0_30px_90px_rgba(0,0,0,.28)] backdrop-blur-xl sm:p-9"><div className="mb-7 flex items-center gap-3 lg:hidden"><span className="grid size-10 place-items-center rounded-xl bg-teal-500 font-black text-white">LP</span><div><strong className="block text-sm text-slate-900">Lead Platform</strong><span className="text-xs text-slate-500">Operator console</span></div></div><p className="text-xs font-bold uppercase tracking-[.18em] text-teal-700">Welcome back</p><h2 className="mt-2 text-3xl font-bold tracking-[-.04em] text-[#142524]">Sign in to your workspace</h2><p className="mt-3 text-sm leading-6 text-slate-500">Use the private admin password configured for this deployment.</p><form className="mt-7" onSubmit={submit}><label className="text-sm font-semibold text-slate-700">Password<input className="input mt-2 py-3" type="password" autoComplete="current-password" required autoFocus value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password"/></label>{error && <p role="alert" className="mt-4 rounded-xl border border-rose-100 bg-rose-50 p-3.5 text-sm text-rose-700">{error}</p>}<button className="button-primary mt-5 w-full py-3" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Open workspace'}</button></form><p className="mt-6 text-center text-xs text-slate-400">Your session is stored in a secure, HTTP-only cookie.</p></section>
+      <section className="hidden text-[#202124] lg:block">
+        <div className="mb-8 grid size-12 place-items-center rounded-xl bg-[#1a73e8] text-lg font-bold text-white shadow-md">LP</div>
+        <p className="text-sm font-bold uppercase tracking-[.2em] text-[#1a73e8]">Growth workspace</p>
+        <h1 className="mt-5 max-w-xl text-5xl font-bold leading-[1.04] tracking-[-.05em]">Turn focused outreach into a repeatable growth system.</h1>
+        <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">Research leads, review AI-assisted drafts, manage follow-ups, and track what converts—all from one calm workspace.</p>
+        <div className="mt-10 flex gap-6 text-sm text-slate-500"><span>Human-approved AI</span><span>•</span><span>Private by default</span><span>•</span><span>Built to ship</span></div>
+      </section>
+      <section className="w-full rounded-2xl border border-[#dadce0] bg-white p-6 shadow-[0_2px_8px_rgba(60,64,67,.15)] sm:p-9">
+        <div className="mb-7 flex items-center gap-3 lg:hidden"><span className="grid size-10 place-items-center rounded-xl bg-[#1a73e8] font-bold text-white">LP</span><div><strong className="block text-sm text-slate-900">Lead Platform</strong><span className="text-xs text-slate-500">Growth workspace</span></div></div>
+        <p className="text-xs font-bold uppercase tracking-[.18em] text-[#1a73e8]">Welcome back</p>
+        <h2 className="mt-2 text-3xl font-bold tracking-[-.04em] text-[#202124]">Sign in to your workspace</h2>
+        <p className="mt-3 text-sm leading-6 text-slate-500">Use the private admin password configured for this deployment.</p>
+        <form className="mt-7" onSubmit={submit}><label className="text-sm font-semibold text-slate-700">Password<input className="input mt-2 py-3" type="password" autoComplete="current-password" required autoFocus value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password"/></label>{error && <p role="alert" className="mt-4 rounded-xl border border-rose-100 bg-rose-50 p-3.5 text-sm text-rose-700">{error}</p>}<button className="button-primary mt-5 w-full py-3" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Open workspace'}</button></form>
+        <p className="mt-6 text-center text-xs text-slate-400">Your session is stored in a secure, HTTP-only cookie.</p>
+      </section>
     </div>
   </main>;
 }

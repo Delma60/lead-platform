@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { LeadsBoard, type ClientLead } from '@/components/LeadsBoard';
 import { leadSources, leadStatuses, rejectionReasons } from '@/lib/db/schema';
 
-type FormState = { company: string; companyUrl: string; contactName: string; contactEmail: string; contactPhone: string; source: string; status: string; priority: string; followUpDate: string; notes: string; rejectionReason: string; referralSourceLead: string; rateScope: string; contractSigned: boolean; depositPaid: boolean };
-const emptyForm: FormState = { company: '', companyUrl: '', contactName: '', contactEmail: '', contactPhone: '', source: 'Other', status: 'New', priority: '3', followUpDate: '', notes: '', rejectionReason: '', referralSourceLead: '', rateScope: '', contractSigned: false, depositPaid: false };
+type FormState = { company: string; companyUrl: string; contactName: string; contactEmail: string; contactPhone: string; whatsappOptIn: boolean; source: string; status: string; priority: string; followUpDate: string; notes: string; rejectionReason: string; referralSourceLead: string; rateScope: string; contractSigned: boolean; depositPaid: boolean };
+const emptyForm: FormState = { company: '', companyUrl: '', contactName: '', contactEmail: '', contactPhone: '', whatsappOptIn: false, source: 'Other', status: 'New', priority: '3', followUpDate: '', notes: '', rejectionReason: '', referralSourceLead: '', rateScope: '', contractSigned: false, depositPaid: false };
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<ClientLead[]>([]);
@@ -16,6 +16,9 @@ export default function LeadsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [error, setError] = useState('');
   const [duplicateWarning, setDuplicateWarning] = useState(false);
+  const [waTemplate, setWaTemplate] = useState('');
+  const [waLanguage, setWaLanguage] = useState('en_US');
+  const [waSending, setWaSending] = useState(false);
 
   const loadLeads = useCallback(async () => {
     try {
@@ -35,13 +38,13 @@ export default function LeadsPage() {
   function openNew() { setEditing(null); setForm(emptyForm); setError(''); setDuplicateWarning(false); setModalOpen(true); }
   function openEdit(lead: ClientLead) {
     setEditing(lead);
-    setForm({ company: lead.company, companyUrl: lead.companyUrl ?? '', contactName: lead.contactName, contactEmail: lead.contactEmail, contactPhone: lead.contactPhone ?? '', source: lead.source ?? 'Other', status: lead.status, priority: String(lead.priority ?? 3), followUpDate: lead.followUpDate?.slice(0, 10) ?? '', notes: lead.notes ?? '', rejectionReason: lead.rejectionReason ?? '', referralSourceLead: String(lead.referralSourceLead ?? ''), rateScope: lead.rateScope ?? '', contractSigned: lead.contractSigned, depositPaid: lead.depositPaid });
+    setForm({ company: lead.company, companyUrl: lead.companyUrl ?? '', contactName: lead.contactName, contactEmail: lead.contactEmail, contactPhone: lead.contactPhone ?? '', whatsappOptIn: !!lead.whatsappOptInAt, source: lead.source ?? 'Other', status: lead.status, priority: String(lead.priority ?? 3), followUpDate: lead.followUpDate?.slice(0, 10) ?? '', notes: lead.notes ?? '', rejectionReason: lead.rejectionReason ?? '', referralSourceLead: String(lead.referralSourceLead ?? ''), rateScope: lead.rateScope ?? '', contractSigned: lead.contractSigned, depositPaid: lead.depositPaid });
     setError(''); setDuplicateWarning(false); setModalOpen(true);
   }
 
   async function save(event: FormEvent, confirmDuplicate = false) {
     event.preventDefault(); setSaving(true); setError('');
-    const payload = { ...form, priority: Number(form.priority), followUpDate: form.followUpDate ? `${form.followUpDate}T12:00:00` : null, rejectionReason: form.status === 'Lost' ? form.rejectionReason : null, referralSourceLead: form.source === 'Referral' && form.referralSourceLead ? Number(form.referralSourceLead) : null, confirmDuplicate };
+    const payload = { ...form, whatsappOptInAt: form.whatsappOptIn ? editing?.whatsappOptInAt ?? new Date().toISOString() : null, priority: Number(form.priority), followUpDate: form.followUpDate ? `${form.followUpDate}T12:00:00` : null, rejectionReason: form.status === 'Lost' ? form.rejectionReason : null, referralSourceLead: form.source === 'Referral' && form.referralSourceLead ? Number(form.referralSourceLead) : null, confirmDuplicate };
     try {
       const response = await fetch(editing ? `/api/leads/${editing.id}` : '/api/leads', { method: editing ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
@@ -76,6 +79,15 @@ export default function LeadsPage() {
     setSaving(false);
   }
 
+  async function sendWhatsApp() {
+    if (!editing || !window.confirm(`Send the approved “${waTemplate}” WhatsApp template to ${editing.contactName}?`)) return;
+    setWaSending(true); setError('');
+    const response = await fetch('/api/whatsapp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leadId: editing.id, templateName: waTemplate, languageCode: waLanguage, approved: true }) });
+    const data = await response.json();
+    if (!response.ok) setError(data.error ?? 'WhatsApp message failed'); else { setWaTemplate(''); window.alert('WhatsApp template sent.'); }
+    setWaSending(false);
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-8 text-slate-900 sm:px-8">
       <div className="mx-auto max-w-[1600px]">
@@ -93,6 +105,7 @@ export default function LeadsPage() {
           <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
             {([['company','Company'],['contactName','Contact name'],['contactEmail','Email'],['contactPhone','Phone']] as const).map(([name,label]) => <label key={name} className="text-sm font-medium text-slate-700">{label}{name !== 'contactPhone' && ' *'}<input className="input mt-1" name={name} type={name === 'contactEmail' ? 'email' : 'text'} required={name !== 'contactPhone'} value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })} /></label>)}
             <label className="text-sm font-medium text-slate-700 sm:col-span-2">Company URL<input className="input mt-1" type="url" placeholder="https://example.com" value={form.companyUrl} onChange={(e) => setForm({ ...form, companyUrl: e.target.value })} /></label>
+            <label className="flex items-start gap-3 rounded-xl border border-[#dadce0] bg-[#f8fafd] p-4 sm:col-span-2"><input className="mt-1 size-4 accent-[#1a73e8]" type="checkbox" checked={form.whatsappOptIn} onChange={(e) => setForm({ ...form, whatsappOptIn: e.target.checked })}/><span><strong className="block text-sm text-slate-800">WhatsApp marketing opt-in recorded</strong><span className="mt-1 block text-xs leading-5 text-slate-500">Enable only when this contact explicitly agreed to receive WhatsApp messages. A phone number alone is not consent.</span></span></label>
             <label className="text-sm font-medium text-slate-700">Source<select className="input mt-1" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>{leadSources.map((source) => <option key={source}>{source}</option>)}</select></label>
             <label className="text-sm font-medium text-slate-700">Status<select className="input mt-1" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>{leadStatuses.map((status) => <option key={status}>{status}</option>)}</select></label>
             <label className="text-sm font-medium text-slate-700">Priority (1–5)<input className="input mt-1" type="number" min="1" max="5" required value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} /></label>
@@ -101,6 +114,7 @@ export default function LeadsPage() {
             {form.source === 'Referral' && <label className="text-sm font-medium text-slate-700">Referred by Won lead<select className="input mt-1" value={form.referralSourceLead} onChange={(e) => setForm({ ...form, referralSourceLead: e.target.value })}><option value="">Select a client</option>{leads.filter((lead) => lead.status === 'Won' && lead.id !== editing?.id).map((lead) => <option key={lead.id} value={lead.id}>{lead.company} — {lead.contactName}</option>)}</select></label>}
             {form.status === 'Won' && <fieldset className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:col-span-2"><legend className="px-1 text-sm font-semibold text-emerald-900">Won-lead follow-through</legend><label className="mt-2 block text-sm font-medium text-emerald-950">Rate and scope notes<textarea className="input mt-1 min-h-24 resize-y" placeholder="Quoted rate, project size, deliverables, timeline…" value={form.rateScope} onChange={(e) => setForm({ ...form, rateScope: e.target.value })}/></label><div className="mt-4 flex flex-wrap gap-5"><label className="flex items-center gap-2 text-sm font-medium text-emerald-950"><input type="checkbox" checked={form.contractSigned} onChange={(e) => setForm({ ...form, contractSigned: e.target.checked })}/>Contract signed</label><label className="flex items-center gap-2 text-sm font-medium text-emerald-950"><input type="checkbox" checked={form.depositPaid} onChange={(e) => setForm({ ...form, depositPaid: e.target.checked })}/>Deposit paid</label></div></fieldset>}
             <label className="text-sm font-medium text-slate-700 sm:col-span-2">Notes<textarea className="input mt-1 min-h-24 resize-y" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></label>
+            {editing && form.contactPhone && form.whatsappOptIn && <fieldset className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:col-span-2"><legend className="px-1 text-sm font-semibold text-emerald-900">Send via WhatsApp</legend><p className="mb-3 text-xs leading-5 text-emerald-800">Uses a pre-approved WhatsApp Business template. Save contact changes before sending.</p><div className="grid gap-3 sm:grid-cols-[1fr_130px_auto]"><input className="input" aria-label="Approved template name" placeholder="approved_template_name" value={waTemplate} onChange={(e) => setWaTemplate(e.target.value)}/><input className="input" aria-label="Template language" placeholder="en_US" value={waLanguage} onChange={(e) => setWaLanguage(e.target.value)}/><button className="rounded-lg bg-[#25d366] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1ebe5d] disabled:opacity-50" type="button" disabled={waSending || !waTemplate.trim()} onClick={() => void sendWhatsApp()}>{waSending ? 'Sending…' : 'Send template'}</button></div></fieldset>}
             {duplicateWarning && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 sm:col-span-2">A lead with this email or company/contact already exists. Save it anyway?</div>}
             {error && <div className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700 sm:col-span-2">{error}</div>}
             <div className="flex items-center justify-between gap-3 sm:col-span-2">{editing ? <button type="button" className="text-sm font-semibold text-rose-600" disabled={saving} onClick={() => void removeLead()}>Delete lead</button> : <span />}<div className="flex gap-2"><button type="button" className="button-secondary" onClick={() => setModalOpen(false)}>Cancel</button>{duplicateWarning ? <button type="button" className="button-primary" disabled={saving} onClick={(event) => void save(event as unknown as FormEvent, true)}>Save anyway</button> : <button type="submit" className="button-primary" disabled={saving}>{saving ? 'Saving…' : 'Save lead'}</button>}</div></div>
